@@ -18,7 +18,7 @@ class CurrentSourceUnit:
         self._current = 0
         self._device = 'NCS5'
         if self._device == 'NCS5' or 'ncs5' or 'ncs':
-            self.current_src = ncs5.NCS5()
+            self.current_src = ncs5.Device()
         elif self._device == 'Keithley 6221':
             self.current_src = k6221.Device()
         else:
@@ -45,61 +45,38 @@ class CurrentSourceUnit:
         return self._device
 
     @current.setter
-    def current(self, value):
+    def current(self, value: float):
         self._current = value
 
     @connection_state.setter
-    def connection_state(self, value):
+    def connection_state(self, value: bool):
         self._connection_state = value
 
     @ch_count.setter
-    def ch_count(self, value):
+    def ch_count(self, value: int):
         self._ch_count = value
 
     @range_enum.setter
-    def range_enum(self, value):
+    def range_enum(self, value: str):
         self._range_enum = value
 
     @device.setter
-    def device(self, value):
+    def device(self, value: str):
         self._device = value
 
-
-    def set_current(self, channel, current):
-        if self._device == 'NCS5':
-            ncs5.set_current(channel, current)
-        else:
-            print("unsupported device")
-
+    def set_current(self, current: float):
+        self.current_src.set_current(current)
 
     def enable_output(self):
-        if self._device == 'NCS5':
-            ncs5.set_enable()
-        else:
-            print("unsupported device")
+        self.current_src.enable_output()
+
+    def disable_output(self):
+        self.current_src.disable_output()
+
+    def set_output_state(self, state: bool):
+        self.current_src.set_output_state(state)
+
+    def set_range(self, range_value: str):
+        self.current_src.set_range(range_value)
 
 
-    def disable_output(self, channel):
-        if self._device == 'NCS5':
-            ncs5.set_disable(channel)
-        else:
-            print("unsupported device")
-
-
-    def set_output_state(self, channel, state):
-        if self._device == 'NCS5':
-            if state == True or state == 1 or state == '1' or state == 'ON':
-                ncs5.set_enable(channel)
-            elif state == False or state == 0 or state == '0' or state == 'OFF':
-                ncs5.set_disable(channel)
-            else:
-                print("unsupported parameter {}".format(state))
-        else:
-            print("unsupported device")
-
-
-    def set_range(self, channel, ch_range):
-        if self._device == 'NCS5':
-            ncs5.set_range(channel, ch_range)
-        else:
-            print("unsupported device")
