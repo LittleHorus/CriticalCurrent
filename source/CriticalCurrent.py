@@ -30,10 +30,10 @@ __version__ = '1.0.0'
 __author__ = 'lha_hl'
 
 
-class CommonWindow(QtWidgets.QWidget): #QMainWindow QtWidgets.QWidget
+class CommonWindow(QtWidgets.QWidget):  # QMainWindow QtWidgets.QWidget
 	"""Класс основного окна программы"""
 	def __init__(self, parent=None):
-		#QtWidgets.QMainWindow.__init__(self, parent)
+		# QtWidgets.QMainWindow.__init__(self, parent)
 
 		super().__init__(parent)
 		self.data_array = [0]*13
@@ -80,7 +80,8 @@ class CommonWindow(QtWidgets.QWidget): #QMainWindow QtWidgets.QWidget
 		except:
 			traceback.print_exc()
 
-	def save_result_to_file(self, path, data):
+	@staticmethod
+	def save_result_to_file(path, data):
 		print("save to file {}\\{}".format(path, data)) 
 
 

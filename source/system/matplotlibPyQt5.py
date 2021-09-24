@@ -2,13 +2,13 @@ import matplotlib
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg, NavigationToolbar2QT as NavigationToolbar
 from matplotlib.figure import Figure
 import sys
-matplotlib.use('Qt5Agg')
 from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QSizePolicy
+matplotlib.use('Qt5Agg')
 
 
 class MplCanvas(FigureCanvasQTAgg):
 
-    def __init__(self, parent = None, width=5, height=4, dpi=100):
+    def __init__(self, parent=None, width=5, height=4, dpi=100):
         fig = Figure(figsize=(width, height), dpi=dpi, facecolor='#F0F0F0')
         self.axes = fig.add_subplot(211)
         super(MplCanvas, self).__init__(fig)
