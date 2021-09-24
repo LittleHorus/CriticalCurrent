@@ -20,8 +20,6 @@ import sys
 import array
 import struct
 import binascii
-import threading
-import selectors
 import types
 import drivers.ncs5
 from system.matplotlibPyQt5 import MplCanvas
