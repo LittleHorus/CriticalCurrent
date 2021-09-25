@@ -9,8 +9,8 @@ import k2182
 
 
 class VoltageSourceUnit:
-    def __init__(self, device_name: str = 'K2182'):
-        self._device = device_name
+    def __init__(self, device: str = 'K2182'):
+        self._device = device
         if self._device == "K2182":
             self.voltage_source = k2182.Device()
         else:

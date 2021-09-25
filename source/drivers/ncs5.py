@@ -23,6 +23,15 @@ class Device:
 
 	def connect(self, dist_address=('192.168.0.77', 7)):
 		self.sock.connect(dist_address)
+		self._connection_status = True
+
+	def close(self):
+		if self._connection_status is True:
+			self.sock.close()
+			self._connection_status = False
+			print('connection closed')
+		else:
+			print('connection already closed')
 
 	@staticmethod
 	def crc8_custom(data, length=9):

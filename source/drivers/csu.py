@@ -9,14 +9,14 @@ import k6221
 
 
 class CurrentSourceUnit:
-    def __init__(self, parent=None):
+    def __init__(self, device: str='NCS5'):
         self._ch_count = 1
         self._range_enum = {'50mA': [-50e-3, 50e3, 1e-6], '10mA': [-10e-3, 10e-3, 100e-9], '1mA': [-1e-3, 1e-3, 10e-9],
                             '100uA': [-100e-6, 100e-6, 1e-9], '10uA': [-10e-6, 10e-6, 100e-12],
                             '1uA': [-1e-6, 1e-6, 10e-12]}
         self._connection_state = 'False'
         self._current = 0
-        self._device = 'NCS5'
+        self._device = device
         if self._device == 'NCS5' or 'ncs5' or 'ncs':
             self.current_src = ncs5.Device()
         elif self._device == 'Keithley 6221':

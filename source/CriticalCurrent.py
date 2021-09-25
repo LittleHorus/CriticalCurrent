@@ -21,9 +21,10 @@ import array
 import struct
 import binascii
 import types
-import drivers.ncs5
+import measurement
 from system.matplotlibPyQt5 import MplCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
+
 __version__ = '1.0.0'
 __author__ = 'lha_hl'
 
@@ -46,6 +47,7 @@ class CommonWindow(QtWidgets.QWidget):  # QMainWindow QtWidgets.QWidget
 		sc.plot_title = 'Volt-Amp Characteristic JJ'
 		sc.plot([0, 1, 2, 3, 4], [10, 1, 20, 3, 40])
 		toolbar = NavigationToolbar(sc, self)
+		sc.setMinimumWidth(700)
 
 		self.tab_wdg = Tabs(self, horizontal_size, vertical_size)
 
@@ -94,10 +96,10 @@ class Tabs(QtWidgets.QWidget):
 		self.tabs = QtWidgets.QTabWidget()
 		self.tab1 = QtWidgets.QWidget()
 		self.tab2 = QtWidgets.QWidget()
-		self.tabs.setMinimumSize(400, 400)
+		self.tabs.setMinimumSize(500, 500)
 		# self.tabs.setMaximumSize(400, 300)
-		self.tabs.setMaximumWidth(500)
-		self.tabs.resize(400, 400)
+		self.tabs.setMaximumWidth(700)
+		self.tabs.resize(500, 500)
 
 		self.tabs.addTab(self.tab1, "Measurement")
 		self.tabs.addTab(self.tab2, "File")
@@ -112,10 +114,16 @@ class Tabs(QtWidgets.QWidget):
 		self.lbl_vmu_connect = QtWidgets.QLabel("VMU")
 
 		self.btn_run_measurement = QtWidgets.QPushButton("Run")
+		self.btn_run_measurement.setMinimumSize(100, 50)
+		self.btn_run_measurement.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
 		self.lbl_run_measurement = QtWidgets.QLabel("Measurement")
+		self.lbl_run_measurement.setFont(QtGui.QFont('Arial', 12))
+		self.lbl_run_measurement.setMinimumSize(120, 30)
+		self.lbl_run_measurement.setMaximumSize(120, 30)
+		self.lbl_run_measurement.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
 
 		self.lbl_current_range = QtWidgets.QLabel("Current range:")
-		self.lbl_voltage_range = QtWidgets.QLabel("Voltage range")
+		self.lbl_voltage_range = QtWidgets.QLabel("Voltage range:")
 		self.cmb_current_range = QtWidgets.QComboBox(self)
 		self.cmb_current_range.addItems(['1uA', '10uA', '100uA', '1mA', '10mA', '50mA'])
 		self.cmb_voltage_range = QtWidgets.QComboBox(self)
@@ -124,31 +132,46 @@ class Tabs(QtWidgets.QWidget):
 		self.lbl_start_current = QtWidgets.QLabel("Start current:")
 		self.led_start_current = QtWidgets.QLineEdit("0")
 		self.led_start_current.setValidator(QRegExpValidator(QtCore.QRegExp("[0-9]{4}|[a-fA-F0-9]{4}")))
+		self.led_start_current.setMaximumSize(120, 30)
+		self.led_start_current.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
 
 		self.lbl_step_current = QtWidgets.QLabel("Step current:")
 		self.led_step_current = QtWidgets.QLineEdit("0")
 		self.led_step_current.setValidator(QRegExpValidator(QtCore.QRegExp("[0-9]{4}|[a-fA-F0-9]{4}")))
+		self.led_step_current.setMaximumSize(120, 30)
+		self.led_step_current.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
 
 		self.lbl_points_current = QtWidgets.QLabel("Current points:")
 		self.led_points_current = QtWidgets.QLineEdit("1")
 		self.led_points_current.setValidator(QRegExpValidator(QtCore.QRegExp("[0-9]{4}|[a-fA-F0-9]{4}")))
+		self.led_points_current.setMaximumSize(120, 30)
+		self.led_points_current.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
 
-		self.grid_tab1.addWidget(QtWidgets.QLabel("JJCC Measurements"), 0, 0, 1, 5)
+		self.lbl_main_description = QtWidgets.QLabel("JJCC Measurements")
+		self.lbl_main_description.setFont(QtGui.QFont('Arial', 12))
+
+		self.grid_tab1.addWidget(self.lbl_main_description, 0, 0, 1, 5)
 		self.grid_tab1.addWidget(self.lbl_csu_connect, 1, 0, 1, 1)
 		self.grid_tab1.addWidget(self.btn_csu_connect, 1, 1, 1, 1)
 		self.grid_tab1.addWidget(self.lbl_vmu_connect, 1, 2, 1, 1, Qt.AlignCenter)
 		self.grid_tab1.addWidget(self.btn_vmu_connect, 1, 3, 1, 1)
-		self.grid_tab1.addWidget(self.lbl_current_range, 2, 0, 1, 1, Qt.AlignCenter)
-		self.grid_tab1.addWidget(self.cmb_current_range, 2, 1, 1, 1, Qt.AlignCenter)
-		self.grid_tab1.addWidget(self.lbl_voltage_range, 2, 2, 1, 1, Qt.AlignCenter)
-		self.grid_tab1.addWidget(self.cmb_voltage_range, 2, 3, 1, 1, Qt.AlignCenter)
-		self.grid_tab1.addWidget(QtWidgets.QLabel("Current source unit parameters:"), 3, 0, 1, 5)
-		self.grid_tab1.addWidget(self.lbl_start_current, 4, 0, 1, 1)
-		self.grid_tab1.addWidget(self.led_start_current, 4, 1, 1, 1)
-		self.grid_tab1.addWidget(self.lbl_step_current,  4, 2, 1, 1)
-		self.grid_tab1.addWidget(self.led_step_current,  4, 3, 1, 1)
-		self.grid_tab1.addWidget(self.lbl_points_current, 4, 4, 1, 1)
-		self.grid_tab1.addWidget(self.led_points_current, 4, 5, 1, 1)
+		self.grid_tab1.addWidget(self.lbl_current_range, 2, 0, 1, 2, Qt.AlignLeft)
+		self.grid_tab1.addWidget(self.cmb_current_range, 3, 0, 1, 2, Qt.AlignLeft)
+		self.grid_tab1.addWidget(self.lbl_voltage_range, 2, 2, 1, 2, Qt.AlignLeft)
+		self.grid_tab1.addWidget(self.cmb_voltage_range, 3, 2, 1, 2, Qt.AlignLeft)
+		self.grid_tab1.addWidget(QtWidgets.QLabel("Current source unit parameters:"), 4, 0, 1, 5)
+		self.grid_tab1.addWidget(self.lbl_start_current, 5, 0, 1, 3)
+		self.grid_tab1.addWidget(self.led_start_current, 6, 0, 1, 3)
+		self.grid_tab1.addWidget(self.lbl_step_current,  5, 2, 1, 3)
+		self.grid_tab1.addWidget(self.led_step_current,  6, 2, 1, 3)
+		self.grid_tab1.addWidget(self.lbl_points_current, 5, 4, 1, 3)
+		self.grid_tab1.addWidget(self.led_points_current, 6, 4, 1, 3)
+
+		self.grid_tab1.addWidget(QtWidgets.QLabel(""), 7, 0, 3, 6)
+		self.grid_tab1.addWidget(self.lbl_run_measurement, 10, 0, 2, 6)
+		self.grid_tab1.addWidget(self.btn_run_measurement, 12, 0, 4, 2)
+		# self.grid_tab1.addWidget(QtWidgets.QLabel("test"), 12, 2, 1, 1)
+		# self.grid_tab1.addWidget(QtWidgets.QLabel("TEST"), 13, 2, 1, 1)
 
 		self.tab1.layout.insertLayout(0, self.grid_tab1)
 		self.tab1.layout.addWidget(QtWidgets.QLabel(""), 1)
@@ -164,7 +187,7 @@ if __name__ == '__main__':
 
 	app = QtWidgets.QApplication(sys.argv)
 	ex = CommonWindow()
-	ex.setFont(QtGui.QFont('Arial', 9))  # QtGui.QFont.Bold
+	ex.setFont(QtGui.QFont('Arial', 10))  # QtGui.QFont.Bold
 	ex.setWindowTitle("LQCE_Est v{}".format(__version__))
 	ex.adjustSize()
 	ex.show()
