@@ -20,9 +20,11 @@ class Device:
 		self._connection_status = False
 		self._device_address = 0xc1
 		self._default_channel = 1
+		self._default_port = 7
+		self._dist_address = ('192.168.0.77', 7)
 
-	def connect(self, dist_address=('192.168.0.77', 7)):
-		self.sock.connect(dist_address)
+	def connect(self):
+		self.sock.connect(self._dist_address)
 		self._connection_status = True
 
 	def close(self):
@@ -151,5 +153,28 @@ class Device:
 	@default_channel.setter
 	def default_channel(self, value: int):
 		if type(value) == int and 0 < value < 16:
-			self._default_channel = value 
+			self._default_channel = value
+
+	@property
+	def dist_address(self):
+		return self._dist_address
+
+	@dist_address.setter
+	def dist_address(self, address: list):
+		if len(address) == 2:
+			self._dist_address = address
+		elif len(address) == 1:
+			self._dist_address = (address, 7)
+			print('not search port number, set to default({})'.format(self._default_port))
+		else:
+			raise Exception('Unknown address parameter')
+
+	@property
+	def default_port(self) -> int:
+		return self._default_port
+
+	@default_port.setter
+	def default_port(self, value: int = 7):
+		self._default_port = value
+
 

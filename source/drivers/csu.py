@@ -9,7 +9,7 @@ import k6221
 
 
 class CurrentSourceUnit:
-    def __init__(self, device: str='NCS5'):
+    def __init__(self, device: str = 'NCS5'):
         self._ch_count = 1
         self._range_enum = {'50mA': [-50e-3, 50e3, 1e-6], '10mA': [-10e-3, 10e-3, 100e-9], '1mA': [-1e-3, 1e-3, 10e-9],
                             '100uA': [-100e-6, 100e-6, 1e-9], '10uA': [-10e-6, 10e-6, 100e-12],
@@ -78,5 +78,11 @@ class CurrentSourceUnit:
 
     def set_range(self, range_value: str):
         self.current_src.set_range(range_value)
+
+    def connect(self, params):
+        self.current_src.connect(params)
+
+    def disconnect(self):
+        self.current_src.disconnect()
 
 

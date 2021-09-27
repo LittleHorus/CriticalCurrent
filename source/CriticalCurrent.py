@@ -177,8 +177,39 @@ class Tabs(QtWidgets.QWidget):
 		self.tab1.layout.addWidget(QtWidgets.QLabel(""), 1)
 		self.tab1.setLayout(self.tab1.layout)
 
+		self.tab2.layout = QtWidgets.QVBoxLayout()
+		self.grid_tab2 = QtWidgets.QGridLayout()
+
+		self.btn_load_file = QtWidgets.QPushButton("Load \n from file")
+		self.btn_load_file.setMaximumSize(120, 60)
+		self.btn_load_file.setMinimumSize(120, 60)
+		self.btn_load_file.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
+		# self.lbl_load_file = QtWidgets.QLabel("CSU")
+		self.grid_tab2.addWidget(self.btn_load_file, 0, 0, 3, 3)
+
+		self.tab2.layout.insertLayout(0, self.grid_tab2)
+		self.tab2.layout.addWidget(QtWidgets.QLabel(""), 1)
+		self.tab2.setLayout(self.tab2.layout)
+
 		self.layout.addWidget(self.tabs)
 		self.setLayout(self.layout)
+
+		self.btn_csu_connect.clicked.connect(self.on_connect_csu)
+		self.btn_vmu_connect.clicked.connect(self.on_connect_vmu)
+
+	@staticmethod
+	def on_connect_csu():
+		try:
+			pass
+		except:
+			traceback.print_exc()
+
+	@staticmethod
+	def on_connect_vmu():
+		try:
+			pass
+		except:
+			traceback.print_exc()
 
 
 if __name__ == '__main__':

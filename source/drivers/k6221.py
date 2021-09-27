@@ -1,24 +1,36 @@
-import numpy as np
-import visa
-import sys
+import pyvisa
 
 
 class Device:
-    def __init__(self, parent=None):
-        self._ip = '192.168.0.70'
+    def __init__(self, ip: str = '192.168.0.70'):
+        self._ip = ip
+        self.rm = pyvisa.ResourceManager()
+        self.instrument = self.rm.open_resource("TCPIP0::{}::INSTR".format(self._ip))
 
     def set_current(self, value: float):
-        print(value)
+        self.instrument.write('CURR {}'.format(value))
 
-    def set_range(self, value):
-        pass
+    def set_range(self, current_range: str = '20mA'):
+        self.instrument.write('CURR:RANG {}'.format(current_range))
+
+    def set_compliance(self, value: int = 10):
+        self.instrument.write('CURR:COMP {}'.format(value))
+
+    def set_analog_filter_state(self, state: bool = False):
+        if state is True:
+            self.instrument.write('CURR:FILT ON')
+        else:
+            self.instrument.write('CURR:FILT OFF')
 
     def enable_output(self):
-        pass
+        self.instrument.write('OUTP ON')
 
     def disable_output(self):
-        pass
+        self.instrument.write('OUTP OFF')
 
-    @staticmethod
     def set_output_state(self, state: bool):
-        print(state)
+        if state is True:
+            self.enable_output()
+        else:
+            self.disable_output()
+

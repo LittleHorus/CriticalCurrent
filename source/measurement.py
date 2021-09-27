@@ -51,6 +51,8 @@ class Measurement:
     def get_run_state(self):
         if self._run_state is True and self._run_pause is False:
             return self._state_machine_stage, 'measurement in process'
+        else:
+            return self._state_machine_stage, 'measurement not run or in pause'
 
     def set_parameters(self, csu_parameters: dict = {}, vmu_parameters: dict = {}):
         self._current_start = csu_parameters['start']
