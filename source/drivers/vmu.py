@@ -3,7 +3,6 @@ import crcmod
 from ctypes import (Union, Array, c_uint8, c_float, cdll, CDLL)
 from enum import Enum
 from ctypes import *
-import visa
 
 import k2182
 

@@ -1,11 +1,17 @@
-import pyvisa
+import pyvisa as visa
 
 
 class Device:
     def __init__(self, ip: str = '192.168.0.70'):
         self._ip = ip
-        self.rm = pyvisa.ResourceManager()
+        self.rm = visa.ResourceManager('@py')
         self.instrument = self.rm.open_resource("TCPIP0::{}::INSTR".format(self._ip))
+
+    def connect(self):
+        pass
+    
+    def disconnect(self):
+        self.instrument.close()
 
     def set_current(self, value: float):
         self.instrument.write('CURR {}'.format(value))

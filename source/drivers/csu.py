@@ -3,7 +3,6 @@ import crcmod
 from ctypes import (Union, Array, c_uint8, c_float, cdll, CDLL)
 from enum import Enum
 from ctypes import *
-import visa
 import ncs5
 import k6221
 
@@ -19,7 +18,7 @@ class CurrentSourceUnit:
         self._device = device
         if self._device == 'NCS5' or 'ncs5' or 'ncs':
             self.current_src = ncs5.Device()
-        elif self._device == 'Keithley 6221':
+        elif self._device == 'K6221' or 'k6221':
             self.current_src = k6221.Device()
         else:
             raise Exception('DeviceSupportError')
@@ -79,8 +78,8 @@ class CurrentSourceUnit:
     def set_range(self, range_value: str):
         self.current_src.set_range(range_value)
 
-    def connect(self, params):
-        self.current_src.connect(params)
+    def connect(self):
+        self.current_src.connect()
 
     def disconnect(self):
         self.current_src.disconnect()

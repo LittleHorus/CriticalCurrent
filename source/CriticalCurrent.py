@@ -24,6 +24,7 @@ import types
 import measurement
 from system.matplotlibPyQt5 import MplCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
+from system.load_settings import LoadSettings
 
 __version__ = '1.0.0'
 __author__ = 'lha_hl'
@@ -37,6 +38,10 @@ class CommonWindow(QtWidgets.QWidget):  # QMainWindow QtWidgets.QWidget
 		super().__init__(parent)
 		self.data_array = [0]*13
 		self.data_bytearray = bytearray(self.data_array)
+
+		open_settings = LoadSettings()
+		open_settings.open_file()
+		open_settings.processing_file_data()
 
 		vertical_size = 30
 		horizontal_size = 80

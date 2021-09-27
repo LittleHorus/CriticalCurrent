@@ -15,7 +15,7 @@ class StateMachine(Enum):
 
 class Measurement:
     def __init__(self, cs_device: str = 'NSC5', vs_device: str = 'K2182'):
-        self._current_start = 0
+        self._current_start = 0.0
         self._step_current = 1e-6
         self._current_points = 1
         self._run_state = False
@@ -54,13 +54,13 @@ class Measurement:
         else:
             return self._state_machine_stage, 'measurement not run or in pause'
 
-    def set_parameters(self, csu_parameters: dict = {}, vmu_parameters: dict = {}):
+    def set_parameters(self, csu_parameters: dict, vmu_parameters: dict):
         self._current_start = csu_parameters['start']
         self._current_points = csu_parameters['points']
         self._step_current = csu_parameters['step']
 
     @property
-    def current_start(self):
+    def current_start(self) -> float:
         return self._current_start
 
     @current_start.setter
@@ -68,7 +68,7 @@ class Measurement:
         self._current_start = value
 
     @property
-    def step_current(self):
+    def step_current(self) -> float:
         return self._step_current
 
     @step_current.setter
@@ -76,7 +76,7 @@ class Measurement:
         self._step_current = value
 
     @property
-    def current_points(self):
+    def current_points(self) -> int:
         return self._current_points
 
     @current_points.setter
