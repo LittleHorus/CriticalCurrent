@@ -16,12 +16,18 @@ class CurrentSourceUnit:
         self._connection_state = 'False'
         self._current = 0
         self._device = device
+
         if self._device == 'NCS5' or 'ncs5' or 'ncs':
             self.current_src = ncs5.Device()
         elif self._device == 'K6221' or 'k6221':
             self.current_src = k6221.Device()
         else:
             raise Exception('DeviceSupportError')
+        self._device_ranges = self.current_src.current_ranges
+
+    @property
+    def device_ranges(self) -> list:
+        return self._device_ranges
 
     @property
     def current(self):

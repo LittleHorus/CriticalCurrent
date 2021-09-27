@@ -21,7 +21,7 @@ import array
 import struct
 import binascii
 import types
-import measurement
+from measurement import Measurement
 from system.matplotlibPyQt5 import MplCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 from system.load_settings import LoadSettings
@@ -39,9 +39,15 @@ class CommonWindow(QtWidgets.QWidget):  # QMainWindow QtWidgets.QWidget
 		self.data_array = [0]*13
 		self.data_bytearray = bytearray(self.data_array)
 
-		open_settings = LoadSettings()
-		open_settings.open_file()
-		open_settings.processing_file_data()
+		self.open_settings = LoadSettings()
+		self.open_settings.open_file()
+		self.open_settings.processing_file_data()
+
+		print(self.open_settings.csu_device, type(self.open_settings.csu_device))
+		print(self.open_settings.vmu_device, type(self.open_settings.vmu_device))
+		meas = Measurement(self.open_settings.csu_device, self.open_settings.vmu_device)
+		att_csu_ranges = meas.csu_ranges
+		print(att_csu_ranges)
 
 		vertical_size = 30
 		horizontal_size = 80
@@ -54,7 +60,7 @@ class CommonWindow(QtWidgets.QWidget):  # QMainWindow QtWidgets.QWidget
 		toolbar = NavigationToolbar(sc, self)
 		sc.setMinimumWidth(700)
 
-		self.tab_wdg = Tabs(self, horizontal_size, vertical_size)
+		self.tab_wdg = Tabs(self, horizontal_size, vertical_size, att_csu_ranges)
 
 		self.vbox_level1 = QtWidgets.QVBoxLayout()
 		self.vbox_level2 = QtWidgets.QVBoxLayout()
@@ -72,6 +78,8 @@ class CommonWindow(QtWidgets.QWidget):  # QMainWindow QtWidgets.QWidget
 		self.setLayout(self.vbox_level1)
 		self.show()
 		# self.setCentralWidget(sc)
+		self.tab_wdg.btn_csu_connect.clicked.connect(self.on_connect_csu)
+		self.tab_wdg.btn_vmu_connect.clicked.connect(self.on_connect_vmu)
 
 	@staticmethod
 	def load_from_file(path, file_type):
@@ -87,11 +95,24 @@ class CommonWindow(QtWidgets.QWidget):  # QMainWindow QtWidgets.QWidget
 
 	@staticmethod
 	def save_result_to_file(path, data):
-		print("save to file {}\\{}".format(path, data)) 
+		print("save to file {}\\{}".format(path, data))
+
+	def on_connect_csu(self):
+		try:
+			print('connect to csu device[{}]'.format(self.open_settings.csu_device))
+		except:
+			traceback.print_exc()
+
+	def on_connect_vmu(self):
+		try:
+			print('connect to vmu device[{}]'.format(self.open_settings.vmu_device))
+		except:
+			traceback.print_exc()
 
 
 class Tabs(QtWidgets.QWidget):
-	def __init__(self, parent, widget_width=80, widget_height=30):
+	def __init__(self, parent, widget_width=80, widget_height=30, att_csu_ranges: list = ['Null'],
+				att_vmu_ranges: list = ['Null']):
 		super(QtWidgets.QWidget, self).__init__(parent)
 		super().__init__(parent)
 		self.layout = QtWidgets.QVBoxLayout()
@@ -130,9 +151,9 @@ class Tabs(QtWidgets.QWidget):
 		self.lbl_current_range = QtWidgets.QLabel("Current range:")
 		self.lbl_voltage_range = QtWidgets.QLabel("Voltage range:")
 		self.cmb_current_range = QtWidgets.QComboBox(self)
-		self.cmb_current_range.addItems(['1uA', '10uA', '100uA', '1mA', '10mA', '50mA'])
+		self.cmb_current_range.addItems(att_csu_ranges)
 		self.cmb_voltage_range = QtWidgets.QComboBox(self)
-		self.cmb_voltage_range.addItems(['1nV', '1uV', '1mV', '1V'])
+		self.cmb_voltage_range.addItems(att_vmu_ranges)
 
 		self.lbl_start_current = QtWidgets.QLabel("Start current:")
 		self.led_start_current = QtWidgets.QLineEdit("0")
@@ -198,23 +219,6 @@ class Tabs(QtWidgets.QWidget):
 
 		self.layout.addWidget(self.tabs)
 		self.setLayout(self.layout)
-
-		self.btn_csu_connect.clicked.connect(self.on_connect_csu)
-		self.btn_vmu_connect.clicked.connect(self.on_connect_vmu)
-
-	@staticmethod
-	def on_connect_csu():
-		try:
-			pass
-		except:
-			traceback.print_exc()
-
-	@staticmethod
-	def on_connect_vmu():
-		try:
-			pass
-		except:
-			traceback.print_exc()
 
 
 if __name__ == '__main__':

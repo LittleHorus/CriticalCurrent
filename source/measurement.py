@@ -24,6 +24,7 @@ class Measurement:
         self.cs = CurrentSourceUnit(device=cs_device)
         self.vs = VoltageSourceUnit(device=vs_device)
         self.data_list = list()
+        self._csu_ranges = self.cs.device_ranges
 
     def run(self):
         self._state_machine_stage = StateMachine.RUN
@@ -58,6 +59,10 @@ class Measurement:
         self._current_start = csu_parameters['start']
         self._current_points = csu_parameters['points']
         self._step_current = csu_parameters['step']
+
+    @property
+    def csu_ranges(self):
+        return self._csu_ranges
 
     @property
     def current_start(self) -> float:

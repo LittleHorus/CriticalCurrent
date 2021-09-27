@@ -6,10 +6,13 @@ class Device:
         self._ip = ip
         self.rm = visa.ResourceManager('@py')
         self.instrument = self.rm.open_resource("TCPIP0::{}::INSTR".format(self._ip))
+        self._current_ranges = ['2nA', '20nA', '200nA',
+                                '2uA', '20uA', '200uA',
+                                '2mA', '20mA', '200mA']
 
     def connect(self):
         pass
-    
+
     def disconnect(self):
         self.instrument.close()
 

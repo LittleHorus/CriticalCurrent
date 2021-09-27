@@ -10,7 +10,8 @@ import k2182
 class VoltageSourceUnit:
     def __init__(self, device: str = 'K2182'):
         self._device = device
-        if self._device == "K2182":
+        print(self._device, type(self._device))
+        if self._device == "K2182" or self._device == 'k2182':
             self.voltage_source = k2182.Device()
         else:
             raise Exception("DeviceSupportError")

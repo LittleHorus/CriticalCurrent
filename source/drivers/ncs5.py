@@ -22,6 +22,7 @@ class Device:
 		self._default_channel = 1
 		self._default_port = 7
 		self._dist_address = ('192.168.0.77', 7)
+		self._current_ranges = ['1uA', '10uA', '100uA', '1mA', '10mA', '50mA']
 
 	def connect(self):
 		self.sock.connect(self._dist_address)
@@ -58,7 +59,8 @@ class Device:
 	@staticmethod
 	def byte_array_to_float(data_array: list, offset: int = 0):
 		temp_data = FType()
-		temp_data.char[:] = (data_array[0+offset], data_array[1+offset], data_array[2+offset], data_array[3+offset])
+		temp_data.char[:] = (
+		data_array[0 + offset], data_array[1 + offset], data_array[2 + offset], data_array[3 + offset])
 		return temp_data.float
 
 	def ch_output_enable(self, channel: int = 1):
@@ -78,24 +80,24 @@ class Device:
 		temp_data = [self._device_address, 0x60, 0x60, 0x60, 0x60, 0x60, 0x60, 0x7f, 0x7f, 0x7f]
 		temp_data[1] = 0x60 | channel
 		if channel_range == '1uA' or channel_range == 1e-6:
-			temp_data[channel+1] = 0x60
+			temp_data[channel + 1] = 0x60
 		elif channel_range == '10uA' or channel_range == 1e-5:
-			temp_data[channel+1] = 0x61
+			temp_data[channel + 1] = 0x61
 		elif channel_range == '100uA' or channel_range == 1e-4:
-			temp_data[channel+1] = 0x62
+			temp_data[channel + 1] = 0x62
 		elif channel_range == '1mA' or channel_range == 1e-3:
-			temp_data[channel+1] = 0x63
+			temp_data[channel + 1] = 0x63
 		elif channel_range == '10mA' or channel_range == 1e-2:
-			temp_data[channel+1] = 0x64
+			temp_data[channel + 1] = 0x64
 		elif channel_range == '50mA' or channel_range == 5e-2:
-			temp_data[channel+1] = 0x65
+			temp_data[channel + 1] = 0x65
 		else:
-			temp_data[channel+1] = 0x60  # 1uA range
+			temp_data[channel + 1] = 0x60  # 1uA range
 		temp_data[9] = self.crc8_custom(temp_data, 9)
 		self.send_via_socket(temp_data)
 
 	def ch_set_current(self, channel: int = 1, current: float = 0.0):
-		float_4_bytes = []*4
+		float_4_bytes = [] * 4
 		float_4_bytes = self.float_to4bytes(current)
 		temp_data = [self._device_address, 0xD0, 0xD0, 0xD0, 0xD0, 0xD0, 0xD0, 0xD0, 0xD0, 0x7f]
 		temp_data[1] = 0xD0 | channel
@@ -105,7 +107,7 @@ class Device:
 		temp_data[5] = float_4_bytes[3]
 		temp_data[9] = self.crc8_custom(temp_data, 9)
 		self.send_via_socket(temp_data)
-		
+
 	def send_via_socket(self, data: list):
 		self.sock.send(bytearray(data))
 		return self.sock.recv(10)
@@ -145,11 +147,11 @@ class Device:
 	def device_address(self, value: int):
 		if type(value) == int and 0 < value < 16:
 			self._device_address = value | 0xc0
-			
+
 	@property
 	def default_channel(self):
 		return self._default_channel
-	
+
 	@default_channel.setter
 	def default_channel(self, value: int):
 		if type(value) == int and 0 < value < 16:
@@ -177,4 +179,7 @@ class Device:
 	def default_port(self, value: int = 7):
 		self._default_port = value
 
+	@property
+	def current_ranges(self) -> list:
+		return self._current_ranges
 
