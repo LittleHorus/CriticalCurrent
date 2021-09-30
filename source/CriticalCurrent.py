@@ -25,7 +25,8 @@ from measurement import Measurement
 from system.matplotlibPyQt5 import MplCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 from system.load_settings import LoadSettings
-
+from system.parameters_estimation import Estimation
+from system.modeling import Model
 __version__ = '1.0.0'
 __author__ = 'lha_hl'
 
@@ -47,7 +48,6 @@ class CommonWindow(QtWidgets.QWidget):  # QMainWindow QtWidgets.QWidget
 		print(self.open_settings.vmu_device, type(self.open_settings.vmu_device))
 		meas = Measurement(self.open_settings.csu_device, self.open_settings.vmu_device)
 		att_csu_ranges = meas.csu_ranges
-		print(att_csu_ranges)
 
 		vertical_size = 30
 		horizontal_size = 80
@@ -81,6 +81,12 @@ class CommonWindow(QtWidgets.QWidget):  # QMainWindow QtWidgets.QWidget
 		self.tab_wdg.btn_csu_connect.clicked.connect(self.on_connect_csu)
 		self.tab_wdg.btn_vmu_connect.clicked.connect(self.on_connect_vmu)
 
+		data_ex = [1e-6, 2e-6, 3e-6, 4e-6, 5e-6, 6e-6, 4e-3, 5e-3, 2e-3]
+		index_value = Estimation.find_threshold_exceed(data_ex, 1e-3)
+		print(index_value, data_ex[index_value])
+
+		Model.ramp(0.1, 'symmetric', 100)
+
 	@staticmethod
 	def load_from_file(path, file_type):
 		try:
@@ -111,9 +117,9 @@ class CommonWindow(QtWidgets.QWidget):  # QMainWindow QtWidgets.QWidget
 
 
 class Tabs(QtWidgets.QWidget):
-	def __init__(self, parent, widget_width=80, widget_height=30, att_csu_ranges: list = ['Null'],
+	def __init__(self, parent = None, widget_width=80, widget_height=30, att_csu_ranges: list = ['Null'],
 				att_vmu_ranges: list = ['Null']):
-		super(QtWidgets.QWidget, self).__init__(parent)
+		# super(QtWidgets.QWidget, self).__init__(parent)
 		super().__init__(parent)
 		self.layout = QtWidgets.QVBoxLayout()
 		self.__widget_width = widget_width
