@@ -18,8 +18,8 @@ class Measurement:
         self._current_start = 0.0
         self._step_current = 1e-6
         self._current_points = 1
-        self._run_state = False
-        self._run_pause = False
+        self._isRun = False
+        self._isPause = False
         self._state_machine_stage = StateMachine.IDLE
         self.cs = CurrentSourceUnit(device=cs_device)
         self.vs = VoltageSourceUnit(device=vs_device)
@@ -42,15 +42,15 @@ class Measurement:
             print('data value: {}'.format(self.data_list[len(self.data_list)-1]))
 
     def stop(self):
-        self._run_state = False
+        self._isRun = False
         self._state_machine_stage = StateMachine.STOP
 
     def set_run_on_pause(self):
         self._state_machine_stage = StateMachine.PAUSE
-        self._run_pause = True
+        self._isPause = True
 
     def get_run_state(self):
-        if self._run_state is True and self._run_pause is False:
+        if self._isRun and not self._isPause:
             return self._state_machine_stage, 'measurement in process'
         else:
             return self._state_machine_stage, 'measurement not run or in pause'

@@ -4,7 +4,6 @@ from configparser import ConfigParser
 import pathlib
 
 
-
 class LoadSettings:
 
     def __init__(self):
