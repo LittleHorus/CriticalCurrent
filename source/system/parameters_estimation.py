@@ -49,29 +49,37 @@ class Estimation:
 		length = len(current)
 		i_under = 0.0
 		i_upper = 0.0
+		v_under = 0.0
+		v_upper = 0.0
 		index = 0
 		for i in range(length):
 			if voltage[i] >= threshold:
 				i_under = current[i - 1]
 				i_upper = current[i]
+				v_under = voltage[i - 1]
+				v_upper = voltage[i]
 				index = i - 1
 				break
-		return i_under, i_upper, index
+		return i_under, i_upper, index, v_under, v_upper
 
 	@staticmethod
 	def estimate_cc(current: list, voltage: list, current_step: float = 0.1e-6, time_step: float = 1.0):
 		current_previous = list()
 		current_exceeded = list()
 		index_list = list()
+		voltage_previous = list()
+		voltage_exceeded = list()
 		res_up = 0.0
 		res_down = 0.0
 		for i in range(len(current)):
-			current_list = current[i]  # Model.current_emul(1e-7, 50, 10e-8)
-			voltage_list = voltage[i]  # Model.contact_emul(current_list, 4e-6, 1.0)
+			current_list = current[i]
+			voltage_list = voltage[i]
 
-			cur_pre, cur_up, index = Estimation.find_smth(current_list, voltage_list, 1e-6)
+			cur_pre, cur_up, index, vol_pre, vol_up = Estimation.find_smth(current_list, voltage_list, 1e-6)
 			current_previous.append(cur_pre)
 			current_exceeded.append(cur_up)
+			voltage_previous.append(vol_pre)
+			voltage_exceeded.append(vol_up)
 			index_list.append(index)
 
 			temp_1 = cur_up - cur_pre - time_step * current_step
@@ -82,7 +90,7 @@ class Estimation:
 			temp_down = ((cur_up - cur_pre - time_step * current_step) / (current_step * (cur_up - cur_pre)))
 			res_down += temp_down * temp_down
 		result = res_up / res_down
-		return result, current_previous, current_exceeded
+		return result, current_previous, current_exceeded, voltage_previous, voltage_exceeded, index_list
 
 	@staticmethod
 	def find_threshold_exceed(data: list, threshold: float) -> int:

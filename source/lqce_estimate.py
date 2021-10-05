@@ -57,7 +57,6 @@ class CommonWindow(QtWidgets.QWidget):  # QMainWindow QtWidgets.QWidget
         sc.plot_x_label = 'Counts'
         sc.plot_y_label = "Amplitude, a.u."
         sc.plot_title = 'Volt-Amp Characteristic JJ'
-        # sc.plot([0, 1, 2, 3, 4], [10, 1, 20, 3, 40])
         toolbar = NavigationToolbar(sc, self)
         sc.setMinimumWidth(700)
 
@@ -78,7 +77,6 @@ class CommonWindow(QtWidgets.QWidget):  # QMainWindow QtWidgets.QWidget
 
         self.setLayout(self.vbox_level1)
         self.show()
-        # self.setCentralWidget(sc)
         self.tab_wdg.btn_csu_connect.clicked.connect(self.on_connect_csu)
         self.tab_wdg.btn_vmu_connect.clicked.connect(self.on_connect_vmu)
         self.tab_wdg.btn_load_file.clicked.connect(self.on_load_from_file)
@@ -89,11 +87,32 @@ class CommonWindow(QtWidgets.QWidget):  # QMainWindow QtWidgets.QWidget
         for i in range(average_count):
             current_em.append(Model.current_emul(1e-7, 100, 10e-8))
             voltage_em.append(Model.contact_emul(current_em[i], 2e-6, 1))
-        est_current = Estimation.estimate_cc(current_em, voltage_em, 1e-7, 1.0)[0]
-        print('estimate current: {}'.format(est_current))
+        tupple_data = Estimation.estimate_cc(current_em, voltage_em, 1e-7, 1.0)
+
+        est_current = tupple_data[0]
+        table_ipm = tupple_data[1]
+        table_ipp = tupple_data[2]
+        table_vpm = tupple_data[3]
+        table_vpp = tupple_data[4]
+        table_i = tupple_data[5]
+        for i in range(len(table_i)):
+
+            self.tab_wdg.table_of_params.setItem(i, 0, QtWidgets.QTableWidgetItem("{:.3e}".format(table_ipm[i])))
+            self.tab_wdg.table_of_params.item(i, 0).setTextAlignment(QtCore.Qt.AlignCenter | QtCore.Qt.AlignVCenter)
+            self.tab_wdg.table_of_params.setItem(i, 1, QtWidgets.QTableWidgetItem("{:.3e}".format(table_ipp[i])))
+            self.tab_wdg.table_of_params.item(i, 1).setTextAlignment(QtCore.Qt.AlignCenter | QtCore.Qt.AlignVCenter)
+            self.tab_wdg.table_of_params.setItem(i, 2,
+                                          QtWidgets.QTableWidgetItem("{:.3e}".format(table_vpm[i])))
+            self.tab_wdg.table_of_params.item(i, 2).setTextAlignment(QtCore.Qt.AlignCenter | QtCore.Qt.AlignVCenter)
+            self.tab_wdg.table_of_params.setItem(i, 3,
+                                          QtWidgets.QTableWidgetItem("{:.3e}".format(table_vpp[i])))
+            self.tab_wdg.table_of_params.item(i, 3).setTextAlignment(QtCore.Qt.AlignCenter | QtCore.Qt.AlignVCenter)
+            self.tab_wdg.table_of_params.setItem(i, 4, QtWidgets.QTableWidgetItem("{:.3e}".format(table_i[i])))
+            self.tab_wdg.table_of_params.item(i, 4).setTextAlignment(QtCore.Qt.AlignCenter | QtCore.Qt.AlignVCenter)
+
+        print('estimate current: {:5.3f}'.format(est_current))
         sc.plot(current_em[0], voltage_em[0])
         sc.plot(current_em[1], voltage_em[1])
-        # self.load_prn()
 
     def on_load_from_file(self):
         file_type = 'prn'
@@ -273,16 +292,37 @@ class Tabs(QtWidgets.QWidget):
         self.btn_load_file.setMinimumSize(120, 60)
         self.btn_load_file.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
 
+        self.table_of_params = QtWidgets.QTableWidget(self)
+        self.table_of_params.setColumnCount(5)
+        self.table_of_params.setMinimumSize(400, 200)
+        self.table_of_params.setMaximumSize(2000, 2700)
+        self.table_of_params.setRowCount(200)
+        self.table_of_params.setHorizontalHeaderLabels(
+            ["	I+-  ", "	I++  ", "V+-", "   V++	 ", "N+-"])
+        self.table_of_params.horizontalHeaderItem(0).setTextAlignment(QtCore.Qt.AlignCenter)
+        self.table_of_params.horizontalHeaderItem(1).setTextAlignment(QtCore.Qt.AlignCenter)
+        self.table_of_params.horizontalHeaderItem(2).setTextAlignment(QtCore.Qt.AlignCenter)
+        self.table_of_params.horizontalHeaderItem(3).setTextAlignment(QtCore.Qt.AlignCenter)
+        self.table_of_params.horizontalHeaderItem(4).setTextAlignment(QtCore.Qt.AlignCenter)
+
+        self.table_of_params.horizontalHeader().setStretchLastSection(True)
+
+        self.table_of_params.resizeColumnsToContents()
+        self.table_of_params.setColumnWidth(0, 120)
+        self.table_of_params.setColumnWidth(1, 120)
+        self.table_of_params.setColumnWidth(2, 120)
+        self.table_of_params.setColumnWidth(3, 120)
+        self.table_of_params.setColumnWidth(4, 120)
+
         self.estimate_value_led = QtWidgets.QLineEdit("")
         self.estimate_value_led.setMaximumSize(120, 40)
         self.estimate_value_led.setReadOnly(True)
-        # self.lbl_load_file = QtWidgets.QLabel("CSU")
         self.grid_tab2.addWidget(self.btn_load_file, 0, 0, 2, 3)
         self.grid_tab2.addWidget(self.estimate_value_led, 3, 2, 2, 2)
         self.grid_tab2.addWidget(QtWidgets.QLabel("Critical Current\n Estimation:"), 3, 0, 2, 4)
 
         self.tab2.layout.insertLayout(0, self.grid_tab2)
-        self.tab2.layout.addWidget(QtWidgets.QLabel(""), 1)
+        self.tab2.layout.addWidget(self.table_of_params, 1)
         self.tab2.setLayout(self.tab2.layout)
 
         self.layout.addWidget(self.tabs)
