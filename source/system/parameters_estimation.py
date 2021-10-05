@@ -1,5 +1,7 @@
 from enum import Enum
 import numpy as np
+from system.modeling import Model
+
 
 class EstimateParameters(Enum):
 	CriticalCurrent = 0
@@ -14,18 +16,17 @@ class Estimation:
 		self.result_value = 0.0
 		self.parameters = {
 			'current_step': 1e-9,
-			'time_step': 1e-3,
+			'time_step': 1,
 			'average_count': 1,
 			'voltages': list(),
 			'currents': list(),
 			'I+-': list(),
 			'I++': list(),
 			'N+-': list(),
-			'voltage_threshold': 1e-3
+			'voltage_threshold': 1e-6
 		}
 
 	def estimate_critical_current(self, current_dict: dict, voltage_dict: dict) -> float:
-		estimated_critical_current = float()
 		temp_hi = float()
 		temp_lo = float()
 
@@ -43,19 +44,8 @@ class Estimation:
 		estimated_critical_current = temp_hi / temp_lo
 		return estimated_critical_current
 
-	def contact_emul(self, current: list, critical_current: float = 1e-6, normal_resistance: float = 1.0):
-		voltage_response = [0] * len(current)
-		first_exceed = 0
-		for i in range(len(current)):
-			if current[i] < critical_current:
-				voltage_response[i] = np.random.normal(0, 5e-9, 1)[0]
-			else:
-				if first_exceed == 0:
-					first_exceed = i
-				voltage_response[i] = np.random.normal(0, 5e-9, 1)[0] + normal_resistance * current[i]
-		return voltage_response
-
-	def find_smth(self, current, voltage, threshold: float = 1e-3):
+	@staticmethod
+	def find_smth(current, voltage, threshold: float = 1e-3):
 		length = len(current)
 		i_under = 0.0
 		i_upper = 0.0
@@ -68,22 +58,18 @@ class Estimation:
 				break
 		return i_under, i_upper, index
 
-	def estimate_cc(self, average_count: int = 100, time_step: float = 1e-3, current_step: float = 0.1e-6):
-		current = list()
-		voltage = list()
+	@staticmethod
+	def estimate_cc(current: list, voltage: list, current_step: float = 0.1e-6, time_step: float = 1.0):
 		current_previous = list()
 		current_exceeded = list()
 		index_list = list()
-		result = 0.0
 		res_up = 0.0
 		res_down = 0.0
-		for i in range(average_count):
-			current_list = [0] * 50
-			for j in range(len(current_list)):
-				current_list[j] = np.random.normal(0, 10e-8, 1)[0] + current_step * j
-			voltage = self.contact_emul(current_list, 4e-6, 1.0)
+		for i in range(len(current)):
+			current_list = current[i]  # Model.current_emul(1e-7, 50, 10e-8)
+			voltage_list = voltage[i]  # Model.contact_emul(current_list, 4e-6, 1.0)
 
-			cur_pre, cur_up, index = self.find_smth(current_list, voltage, 1e-6)
+			cur_pre, cur_up, index = Estimation.find_smth(current_list, voltage_list, 1e-6)
 			current_previous.append(cur_pre)
 			current_exceeded.append(cur_up)
 			index_list.append(index)

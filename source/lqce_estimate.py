@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import QCompleter
 from PyQt5.QtGui import QRegExpValidator
 from PyQt5.QtCore import QTimer
 
-
+import re
 import numpy as np
 import os
 from time import gmtime, strftime
@@ -25,6 +25,7 @@ from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as Navigatio
 from system.load_settings import LoadSettings
 from system.parameters_estimation import Estimation
 from system.modeling import Model
+import matplotlib.pyplot as plt
 __version__ = '1.0.0'
 __author__ = 'lha_hl'
 
@@ -35,8 +36,12 @@ class CommonWindow(QtWidgets.QWidget):  # QMainWindow QtWidgets.QWidget
         # QtWidgets.QMainWindow.__init__(self, parent)
 
         super().__init__(parent)
-        self.data_array = [0]*13
-        self.data_bytearray = bytearray(self.data_array)
+        self.common_path = ''
+        try:
+            self.common_path = os.path.dirname(os.path.abspath('lqce_estimate.py'))
+            print('dir path: {}'.format(self.common_path))
+        except Exception as exc:
+            print('get filepath failed: {}'.format(exc))
 
         self.open_settings = LoadSettings()
         self.open_settings.open_file()
@@ -52,7 +57,7 @@ class CommonWindow(QtWidgets.QWidget):  # QMainWindow QtWidgets.QWidget
         sc.plot_x_label = 'Counts'
         sc.plot_y_label = "Amplitude, a.u."
         sc.plot_title = 'Volt-Amp Characteristic JJ'
-        sc.plot([0, 1, 2, 3, 4], [10, 1, 20, 3, 40])
+        # sc.plot([0, 1, 2, 3, 4], [10, 1, 20, 3, 40])
         toolbar = NavigationToolbar(sc, self)
         sc.setMinimumWidth(700)
 
@@ -76,25 +81,48 @@ class CommonWindow(QtWidgets.QWidget):  # QMainWindow QtWidgets.QWidget
         # self.setCentralWidget(sc)
         self.tab_wdg.btn_csu_connect.clicked.connect(self.on_connect_csu)
         self.tab_wdg.btn_vmu_connect.clicked.connect(self.on_connect_vmu)
+        self.tab_wdg.btn_load_file.clicked.connect(self.on_load_from_file)
 
-        data_ex = [1e-6, 2e-6, 3e-6, 4e-6, 5e-6, 6e-6, 4e-3, 5e-3, 2e-3]
-        index_value = Estimation.find_threshold_exceed(data_ex, 1e-3)
-        print(index_value, data_ex[index_value])
+        average_count = 100
+        current_em = list()
+        voltage_em = list()
+        for i in range(average_count):
+            current_em.append(Model.current_emul(1e-7, 100, 10e-8))
+            voltage_em.append(Model.contact_emul(current_em[i], 2e-6, 1))
+        est_current = Estimation.estimate_cc(current_em, voltage_em, 1e-7, 1.0)[0]
+        print('estimate current: {}'.format(est_current))
+        sc.plot(current_em[0], voltage_em[0])
+        sc.plot(current_em[1], voltage_em[1])
+        # self.load_prn()
 
-        Model.ramp(0.1, 'symmetric', 100)
-
-    @staticmethod
-    def load_from_file(path, file_type):
+    def on_load_from_file(self):
+        file_type = 'prn'
+        filename = ''
+        result_data = list()
+        try:
+            filename = QtWidgets.QFileDialog.getOpenFileName(
+                self, 'Open file', self.common_path,
+                "Text files (*.txt);;Numpy(*.npy);;Mathcad(*prn)", "Mathcad (*.prn)")[0]
+            if bool(re.search('.prn', filename)):
+                file_type = 'prn'
+            if bool(re.search('.npy', filename)):
+                file_type = 'npy'
+            if bool(re.search('.txt', filename)):
+                file_type = 'txt'
+        except Exception as exc:
+            print('Exception: {}'.format(exc))
         try:
             if file_type == 'txt':
-                print("load txt file")
+                result_data = self.load_txt(filename)
             elif file_type == 'npy':
-                print("load numpy file")
+                result_data = self.load_npy(filename)
+            elif file_type == 'prn':
+                result_data = self.load_prn(filename, filename_type='FULL_PATH')
             else:
-                print("unknown file type")
+                raise Exception('UnknownDataTypeError')
         except Exception as exc:
             print(exc)
-            traceback.print_exc()
+        return result_data
 
     @staticmethod
     def save_result_to_file(path, data):
@@ -113,6 +141,33 @@ class CommonWindow(QtWidgets.QWidget):  # QMainWindow QtWidgets.QWidget
         except Exception as exc:
             print(exc)
             traceback.print_exc()
+
+    def load_prn(self, filename='current_data_0.prn', filename_type='FULL_PATH'):
+        if filename_type == 'NAME_ONLY':
+            with open("{}\\data\\{}".format(self.common_path, filename), "r") as file_:
+                data = file_.readlines()
+                data_result = self.convert_prn(data)
+                return data_result
+        if filename_type == 'FULL_PATH':
+            with open(filename, "r") as file_:
+                data = file_.readlines()
+                data_result = self.convert_prn(data)
+                return data_result
+
+    def load_npy(self, filename):
+        return np.load(filename)
+
+    def load_txt(self, filename):
+        return np.loadtxt(filename, float, delimiter=',')
+
+    def convert_prn(self, prn_data):
+        data = list()
+        for i in range(len(prn_data)):
+            res = re.sub(r'(e-[0-9]{3})', r"\1 ", prn_data[i])
+            res = re.sub(r'\s\s', r" ", res)
+            t_data = np.fromstring(res, dtype=float, sep=' ')
+            data.append(t_data)
+        return data
 
 
 class Tabs(QtWidgets.QWidget):
@@ -205,7 +260,6 @@ class Tabs(QtWidgets.QWidget):
         self.grid_tab1.addWidget(self.lbl_run_measurement, 10, 0, 2, 6)
         self.grid_tab1.addWidget(self.btn_run_measurement, 12, 0, 4, 2)
         # self.grid_tab1.addWidget(QtWidgets.QLabel("test"), 12, 2, 1, 1)
-        # self.grid_tab1.addWidget(QtWidgets.QLabel("TEST"), 13, 2, 1, 1)
 
         self.tab1.layout.insertLayout(0, self.grid_tab1)
         self.tab1.layout.addWidget(QtWidgets.QLabel(""), 1)
@@ -218,8 +272,14 @@ class Tabs(QtWidgets.QWidget):
         self.btn_load_file.setMaximumSize(120, 60)
         self.btn_load_file.setMinimumSize(120, 60)
         self.btn_load_file.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
+
+        self.estimate_value_led = QtWidgets.QLineEdit("")
+        self.estimate_value_led.setMaximumSize(120, 40)
+        self.estimate_value_led.setReadOnly(True)
         # self.lbl_load_file = QtWidgets.QLabel("CSU")
-        self.grid_tab2.addWidget(self.btn_load_file, 0, 0, 3, 3)
+        self.grid_tab2.addWidget(self.btn_load_file, 0, 0, 2, 3)
+        self.grid_tab2.addWidget(self.estimate_value_led, 3, 2, 2, 2)
+        self.grid_tab2.addWidget(QtWidgets.QLabel("Critical Current\n Estimation:"), 3, 0, 2, 4)
 
         self.tab2.layout.insertLayout(0, self.grid_tab2)
         self.tab2.layout.addWidget(QtWidgets.QLabel(""), 1)

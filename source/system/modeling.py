@@ -1,5 +1,6 @@
 from enum import Enum
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 class Model:
@@ -33,3 +34,23 @@ class Model:
             for i in range(points_count):
                 result.append(-i*delta)
         return result
+
+    @staticmethod
+    def contact_emul(current: list, critical_current: float = 1e-6, normal_resistance: float = 1.0):
+        voltage_response = [0] * len(current)
+        first_exceed = 0
+        for i in range(len(current)):
+            if current[i] < critical_current:
+                voltage_response[i] = np.random.normal(0, 5e-9, 1)[0]
+            else:
+                if first_exceed == 0:
+                    first_exceed = i
+                voltage_response[i] = np.random.normal(0, 5e-9, 1)[0] + normal_resistance * current[i]
+        return voltage_response
+
+    @staticmethod
+    def current_emul(current_step: float = 1e-7, length: int = 50, noise_level: float = 5e-8) -> list:
+        current_list = [0] * length
+        for j in range(length):
+            current_list[j] = np.random.normal(0, noise_level, 1)[0] + current_step * j
+        return current_list

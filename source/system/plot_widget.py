@@ -21,10 +21,11 @@ class MplCanvas(FigureCanvasQTAgg):
         self._plot_title = 'Plot title'
 
     def plot(self, data_x: list, data_y: list):
+        self.axes.cla()
         if data_x is None and data_y:
-            self.axes.plot(data_y, 'g--')
+            self.axes.plot(data_y, 'go--')
         elif data_x and data_y:
-            self.axes.plot(data_x, data_y, 'g--')
+            self.axes.plot(data_x, data_y, 'go--')
         else:
             pass
 
