@@ -53,12 +53,15 @@ class CommonWindow(QtWidgets.QWidget):  # QMainWindow QtWidgets.QWidget
         vertical_size = 30
         horizontal_size = 80
 
-        sc = MplCanvas(self, width=12, height=6, dpi=100)
-        sc.plot_x_label = 'Counts'
-        sc.plot_y_label = "Amplitude, a.u."
-        sc.plot_title = 'Volt-Amp Characteristic JJ'
-        toolbar = NavigationToolbar(sc, self)
-        sc.setMinimumWidth(700)
+        self.table_previous_row = 0
+        self.table_current_row = 0
+
+        self.sc = MplCanvas(self, width=12, height=6, dpi=100)
+        self.sc.plot_x_label = 'Counts'
+        self.sc.plot_y_label = "Amplitude, a.u."
+        self.sc.plot_title = 'Volt-Amp Characteristic JJ'
+        toolbar = NavigationToolbar(self.sc, self)
+        self.sc.setMinimumWidth(700)
 
         self.tab_wdg = Tabs(self, horizontal_size, vertical_size, att_csu_ranges)
 
@@ -67,7 +70,7 @@ class CommonWindow(QtWidgets.QWidget):  # QMainWindow QtWidgets.QWidget
         self.hbox_level1 = QtWidgets.QHBoxLayout()
         self.hbox_level1.addWidget(self.tab_wdg)
         self.vbox_level2.addWidget(toolbar)
-        self.vbox_level2.addWidget(sc)
+        self.vbox_level2.addWidget(self.sc)
         self.vbox_level2.addWidget((QtWidgets.QLabel("")), 2)
 
         self.hbox_level1.insertLayout(1, self.vbox_level2)
@@ -82,12 +85,12 @@ class CommonWindow(QtWidgets.QWidget):  # QMainWindow QtWidgets.QWidget
         self.tab_wdg.btn_load_file.clicked.connect(self.on_load_from_file)
 
         average_count = 100
-        current_em = list()
-        voltage_em = list()
+        self.current_em = list()
+        self.voltage_em = list()
         for i in range(average_count):
-            current_em.append(Model.current_emul(1e-7, 100, 10e-8))
-            voltage_em.append(Model.contact_emul(current_em[i], 2e-6, 1))
-        tupple_data = Estimation.estimate_cc(current_em, voltage_em, 1e-7, 1.0)
+            self.current_em.append(Model.current_emul(1e-7, 100, 10e-8))
+            self.voltage_em.append(Model.contact_emul(self.current_em[i], 2e-6, 1))
+        tupple_data = Estimation.estimate_cc(self.current_em, self.voltage_em, 1e-7, 1.0)
 
         est_current = tupple_data[0]
         table_ipm = tupple_data[1]
@@ -101,27 +104,43 @@ class CommonWindow(QtWidgets.QWidget):  # QMainWindow QtWidgets.QWidget
             self.tab_wdg.table_of_params.item(i, 0).setTextAlignment(QtCore.Qt.AlignCenter | QtCore.Qt.AlignVCenter)
             self.tab_wdg.table_of_params.setItem(i, 1, QtWidgets.QTableWidgetItem("{:.3e}".format(table_ipp[i])))
             self.tab_wdg.table_of_params.item(i, 1).setTextAlignment(QtCore.Qt.AlignCenter | QtCore.Qt.AlignVCenter)
-            self.tab_wdg.table_of_params.setItem(i, 2,
-                                          QtWidgets.QTableWidgetItem("{:.3e}".format(table_vpm[i])))
+            self.tab_wdg.table_of_params.setItem(
+                i, 2, QtWidgets.QTableWidgetItem("{:.3e}".format(table_vpm[i])))
             self.tab_wdg.table_of_params.item(i, 2).setTextAlignment(QtCore.Qt.AlignCenter | QtCore.Qt.AlignVCenter)
-            self.tab_wdg.table_of_params.setItem(i, 3,
-                                          QtWidgets.QTableWidgetItem("{:.3e}".format(table_vpp[i])))
+            self.tab_wdg.table_of_params.setItem(
+                i, 3, QtWidgets.QTableWidgetItem("{:.3e}".format(table_vpp[i])))
             self.tab_wdg.table_of_params.item(i, 3).setTextAlignment(QtCore.Qt.AlignCenter | QtCore.Qt.AlignVCenter)
-            self.tab_wdg.table_of_params.setItem(i, 4, QtWidgets.QTableWidgetItem("{:.3e}".format(table_i[i])))
+            self.tab_wdg.table_of_params.setItem(i, 4, QtWidgets.QTableWidgetItem("{}".format(table_i[i])))
             self.tab_wdg.table_of_params.item(i, 4).setTextAlignment(QtCore.Qt.AlignCenter | QtCore.Qt.AlignVCenter)
 
-        print('estimate current: {:5.3f}'.format(est_current))
-        sc.plot(current_em[0], voltage_em[0])
-        sc.plot(current_em[1], voltage_em[1])
+        print('estimate current: {}'.format(est_current))
+        self.sc.plot(self.current_em[0], self.voltage_em[0])
+        self.sc.plot(self.current_em[1], self.voltage_em[1])
+
+        self.tab_wdg.table_of_params.itemClicked.connect(self.on_change_active_row)
+
+    def on_change_active_row(self):
+        self.table_previous_row = self.table_current_row
+        self.table_current_row = self.tab_wdg.table_of_params.currentRow()
+        print('current row: {} {}'.format(self.table_current_row, self.table_previous_row))
+        try:
+            self.tab_wdg.table_of_params.selectRow(self.table_current_row)
+            if self.table_current_row < len(self.current_em):
+                self.sc.plot(self.current_em[self.table_current_row], self.voltage_em[self.table_current_row])
+
+        except Exception as exc:
+            print("Exception: {}".format(exc))
 
     def on_load_from_file(self):
         file_type = 'prn'
         filename = ''
         result_data = list()
+        result_current = list()
+        result_voltage = list()
         try:
             filename = QtWidgets.QFileDialog.getOpenFileName(
                 self, 'Open file', self.common_path,
-                "Text files (*.txt);;Numpy(*.npy);;Mathcad(*prn)", "Mathcad (*.prn)")[0]
+                "Text files(*.txt);;Numpy(*.npy);;Mathcad(*prn)", "Mathcad (*.prn)")[0]
             if bool(re.search('.prn', filename)):
                 file_type = 'prn'
             if bool(re.search('.npy', filename)):
@@ -136,11 +155,17 @@ class CommonWindow(QtWidgets.QWidget):  # QMainWindow QtWidgets.QWidget
             elif file_type == 'npy':
                 result_data = self.load_npy(filename)
             elif file_type == 'prn':
-                result_data = self.load_prn(filename, filename_type='FULL_PATH')
+                result_current = self.load_prn(filename, filename_type='FULL_PATH')
+                filename = QtWidgets.QFileDialog.getOpenFileName(
+                    self, 'Open voltage values file', self.common_path, "Mathcad(*prn)", "Mathcad (*.prn)")[0]
+                result_voltage = self.load_prn(filename, filename_type='FULL_PATH')
+                result_data.append(result_current)
+                result_data.append(result_voltage)
             else:
                 raise Exception('UnknownDataTypeError')
         except Exception as exc:
             print(exc)
+        print(result_data)
         return result_data
 
     @staticmethod
@@ -181,11 +206,19 @@ class CommonWindow(QtWidgets.QWidget):  # QMainWindow QtWidgets.QWidget
 
     def convert_prn(self, prn_data):
         data = list()
-        for i in range(len(prn_data)):
-            res = re.sub(r'(e-[0-9]{3})', r"\1 ", prn_data[i])
-            res = re.sub(r'\s\s', r" ", res)
-            t_data = np.fromstring(res, dtype=float, sep=' ')
-            data.append(t_data)
+        if bool(re.search(r',', prn_data[0])):
+            data = list()
+            for i in range(len(prn_data)):
+                res = re.sub(r',', r".", prn_data[i])
+                t_data = np.fromstring(res, dtype=float, sep=' ')
+                data.append(t_data)
+            return data
+        else:
+            for i in range(len(prn_data)):
+                res = re.sub(r'(e-[0-9]{3})', r"\1 ", prn_data[i])
+                res = re.sub(r'\s\s', r" ", res)
+                t_data = np.fromstring(res, dtype=float, sep=' ')
+                data.append(t_data)
         return data
 
 
