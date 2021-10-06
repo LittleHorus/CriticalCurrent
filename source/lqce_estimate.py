@@ -84,6 +84,9 @@ class CommonWindow(QtWidgets.QWidget):  # QMainWindow QtWidgets.QWidget
         self.tab_wdg.btn_vmu_connect.clicked.connect(self.on_connect_vmu)
         self.tab_wdg.btn_load_file.clicked.connect(self.on_load_from_file)
 
+        self.current_from_file = list()
+        self.voltage_from_file = list()
+
         average_count = 100
         self.current_em = list()
         self.voltage_em = list()
@@ -99,7 +102,6 @@ class CommonWindow(QtWidgets.QWidget):  # QMainWindow QtWidgets.QWidget
         table_vpp = tupple_data[4]
         table_i = tupple_data[5]
         for i in range(len(table_i)):
-
             self.tab_wdg.table_of_params.setItem(i, 0, QtWidgets.QTableWidgetItem("{:.3e}".format(table_ipm[i])))
             self.tab_wdg.table_of_params.item(i, 0).setTextAlignment(QtCore.Qt.AlignCenter | QtCore.Qt.AlignVCenter)
             self.tab_wdg.table_of_params.setItem(i, 1, QtWidgets.QTableWidgetItem("{:.3e}".format(table_ipp[i])))
@@ -131,6 +133,32 @@ class CommonWindow(QtWidgets.QWidget):  # QMainWindow QtWidgets.QWidget
         except Exception as exc:
             print("Exception: {}".format(exc))
 
+    def update_estimation(self, current_list, voltage_list):
+        tupple_data = Estimation.estimate_cc(current_list, voltage_list, 1e-7, 1.0)
+
+        est_current = tupple_data[0]
+        table_ipm = tupple_data[1]
+        table_ipp = tupple_data[2]
+        table_vpm = tupple_data[3]
+        table_vpp = tupple_data[4]
+        table_i = tupple_data[5]
+        for i in range(len(table_i)):
+            self.tab_wdg.table_of_params.setItem(i, 0, QtWidgets.QTableWidgetItem("{:.3e}".format(table_ipm[i])))
+            self.tab_wdg.table_of_params.item(i, 0).setTextAlignment(QtCore.Qt.AlignCenter | QtCore.Qt.AlignVCenter)
+            self.tab_wdg.table_of_params.setItem(i, 1, QtWidgets.QTableWidgetItem("{:.3e}".format(table_ipp[i])))
+            self.tab_wdg.table_of_params.item(i, 1).setTextAlignment(QtCore.Qt.AlignCenter | QtCore.Qt.AlignVCenter)
+            self.tab_wdg.table_of_params.setItem(
+                i, 2, QtWidgets.QTableWidgetItem("{:.3e}".format(table_vpm[i])))
+            self.tab_wdg.table_of_params.item(i, 2).setTextAlignment(QtCore.Qt.AlignCenter | QtCore.Qt.AlignVCenter)
+            self.tab_wdg.table_of_params.setItem(
+                i, 3, QtWidgets.QTableWidgetItem("{:.3e}".format(table_vpp[i])))
+            self.tab_wdg.table_of_params.item(i, 3).setTextAlignment(QtCore.Qt.AlignCenter | QtCore.Qt.AlignVCenter)
+            self.tab_wdg.table_of_params.setItem(i, 4, QtWidgets.QTableWidgetItem("{}".format(table_i[i])))
+            self.tab_wdg.table_of_params.item(i, 4).setTextAlignment(QtCore.Qt.AlignCenter | QtCore.Qt.AlignVCenter)
+
+        print('estimate current: {}'.format(est_current))
+        self.sc.plot(self.current_em[0], self.voltage_em[0])
+
     def on_load_from_file(self):
         file_type = 'prn'
         filename = ''
@@ -161,11 +189,16 @@ class CommonWindow(QtWidgets.QWidget):  # QMainWindow QtWidgets.QWidget
                 result_voltage = self.load_prn(filename, filename_type='FULL_PATH')
                 result_data.append(result_current)
                 result_data.append(result_voltage)
+                self.current_from_file = result_current
+                self.voltage_from_file = result_voltage
+                self.sc.plot(list(self.current_from_file[0]), list(self.voltage_from_file[0]))
+
+                self.update_estimation(self.current_from_file, self.voltage_from_file)
+
             else:
                 raise Exception('UnknownDataTypeError')
         except Exception as exc:
             print(exc)
-        print(result_data)
         return result_data
 
     @staticmethod
