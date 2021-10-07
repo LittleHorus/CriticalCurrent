@@ -93,7 +93,7 @@ class CommonWindow(QtWidgets.QWidget):  # QMainWindow QtWidgets.QWidget
         for i in range(average_count):
             self.current_em.append(Model.current_emul(1e-7, 100, 10e-8))
             self.voltage_em.append(Model.contact_emul(self.current_em[i], 2e-6, 1))
-        tupple_data = Estimation.estimate_cc(self.current_em, self.voltage_em, 1e-7, 1.0)
+        tupple_data = Estimation.estimate_cc(self.current_em, self.voltage_em, 0.1e-6, 1.0)
 
         est_current = tupple_data[0]
         table_ipm = tupple_data[1]
@@ -134,7 +134,7 @@ class CommonWindow(QtWidgets.QWidget):  # QMainWindow QtWidgets.QWidget
             print("Exception: {}".format(exc))
 
     def update_estimation(self, current_list, voltage_list):
-        tupple_data = Estimation.estimate_cc(current_list, voltage_list, 1e-7, 1.0)
+        tupple_data = Estimation.estimate_cc(current_list, voltage_list, 25e-9, 1)
 
         est_current = tupple_data[0]
         table_ipm = tupple_data[1]
@@ -157,6 +157,7 @@ class CommonWindow(QtWidgets.QWidget):  # QMainWindow QtWidgets.QWidget
             self.tab_wdg.table_of_params.item(i, 4).setTextAlignment(QtCore.Qt.AlignCenter | QtCore.Qt.AlignVCenter)
 
         print('estimate current: {}'.format(est_current))
+        self.tab_wdg.estimate_value_led.setText('{:.3e}'.format(est_current))
         self.sc.plot(self.current_em[0], self.voltage_em[0])
 
     def on_load_from_file(self):
@@ -168,7 +169,7 @@ class CommonWindow(QtWidgets.QWidget):  # QMainWindow QtWidgets.QWidget
         try:
             filename = QtWidgets.QFileDialog.getOpenFileName(
                 self, 'Open file', self.common_path,
-                "Text files(*.txt);;Numpy(*.npy);;Mathcad(*prn)", "Mathcad (*.prn)")[0]
+                "Mathcad(*prn);;Text files(*.txt);;Numpy(*.npy);;", "Mathcad (*.prn)")[0]
             if bool(re.search('.prn', filename)):
                 file_type = 'prn'
             if bool(re.search('.npy', filename)):

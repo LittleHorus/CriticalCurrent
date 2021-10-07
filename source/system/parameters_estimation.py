@@ -63,7 +63,9 @@ class Estimation:
 		return i_under, i_upper, index, v_under, v_upper
 
 	@staticmethod
-	def estimate_cc(current: list, voltage: list, current_step: float = 0.1e-6, time_step: float = 1.0):
+	def estimate_cc(
+			current: list, voltage: list, current_step: float = 0.1e-6, time_step: float = 1.0,
+			threshold: float = 1.8e-6):
 		current_previous = list()
 		current_exceeded = list()
 		index_list = list()
@@ -75,7 +77,7 @@ class Estimation:
 			current_list = current[i]
 			voltage_list = voltage[i]
 
-			cur_pre, cur_up, index, vol_pre, vol_up = Estimation.find_smth(current_list, voltage_list, 1e-6)
+			cur_pre, cur_up, index, vol_pre, vol_up = Estimation.find_smth(current_list, voltage_list, threshold)
 			current_previous.append(cur_pre)
 			current_exceeded.append(cur_up)
 			voltage_previous.append(vol_pre)
