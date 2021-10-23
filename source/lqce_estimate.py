@@ -93,7 +93,7 @@ class CommonWindow(QtWidgets.QWidget):  # QMainWindow QtWidgets.QWidget
         for i in range(average_count):
             self.current_em.append(Model.current_emul(1e-7, 100, 10e-8))
             self.voltage_em.append(Model.contact_emul(self.current_em[i], 2e-6, 1))
-        tupple_data = Estimation.estimate_cc(self.current_em, self.voltage_em, 0.1e-6, 1.0)
+        tupple_data = Estimation.estimate_cc(self.current_em, self.voltage_em, 0.1e-6, 1, 1.8e-6)
 
         est_current = tupple_data[0]
         table_ipm = tupple_data[1]
@@ -129,12 +129,11 @@ class CommonWindow(QtWidgets.QWidget):  # QMainWindow QtWidgets.QWidget
             self.tab_wdg.table_of_params.selectRow(self.table_current_row)
             if self.table_current_row < len(self.current_em):
                 self.sc.plot(self.current_em[self.table_current_row], self.voltage_em[self.table_current_row])
-
         except Exception as exc:
             print("Exception: {}".format(exc))
 
     def update_estimation(self, current_list, voltage_list):
-        tupple_data = Estimation.estimate_cc(current_list, voltage_list, 25e-9, 1)
+        tupple_data = Estimation.estimate_cc(current_list, voltage_list, 25e-9, 1e-7)
 
         est_current = tupple_data[0]
         table_ipm = tupple_data[1]
@@ -155,7 +154,6 @@ class CommonWindow(QtWidgets.QWidget):  # QMainWindow QtWidgets.QWidget
             self.tab_wdg.table_of_params.item(i, 3).setTextAlignment(QtCore.Qt.AlignCenter | QtCore.Qt.AlignVCenter)
             self.tab_wdg.table_of_params.setItem(i, 4, QtWidgets.QTableWidgetItem("{}".format(table_i[i])))
             self.tab_wdg.table_of_params.item(i, 4).setTextAlignment(QtCore.Qt.AlignCenter | QtCore.Qt.AlignVCenter)
-
         print('estimate current: {}'.format(est_current))
         self.tab_wdg.estimate_value_led.setText('{:.3e}'.format(est_current))
         self.sc.plot(self.current_em[0], self.voltage_em[0])
@@ -193,9 +191,7 @@ class CommonWindow(QtWidgets.QWidget):  # QMainWindow QtWidgets.QWidget
                 self.current_from_file = result_current
                 self.voltage_from_file = result_voltage
                 self.sc.plot(list(self.current_from_file[0]), list(self.voltage_from_file[0]))
-
                 self.update_estimation(self.current_from_file, self.voltage_from_file)
-
             else:
                 raise Exception('UnknownDataTypeError')
         except Exception as exc:
@@ -359,6 +355,16 @@ class Tabs(QtWidgets.QWidget):
         self.btn_load_file.setMinimumSize(120, 60)
         self.btn_load_file.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
 
+        self.btn_set_params = QtWidgets.QPushButton("Set \n parameters")
+        self.btn_set_params.setMaximumSize(120, 60)
+        self.btn_set_params.setMinimumSize(120, 60)
+        self.btn_set_params.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
+
+        self.estimate_threshold_led = QtWidgets.QLineEdit("")
+        self.estimate_threshold_led.setMaximumSize(120, 40)
+        self.estimate_threshold_led.setMinimumSize(120, 40)
+        self.estimate_threshold_led.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
+
         self.table_of_params = QtWidgets.QTableWidget(self)
         self.table_of_params.setColumnCount(5)
         self.table_of_params.setMinimumSize(400, 200)
@@ -385,6 +391,8 @@ class Tabs(QtWidgets.QWidget):
         self.estimate_value_led.setMaximumSize(120, 40)
         self.estimate_value_led.setReadOnly(True)
         self.grid_tab2.addWidget(self.btn_load_file, 0, 0, 2, 3)
+        self.grid_tab2.addWidget(self.btn_set_params, 0, 3, 2, 3)
+        self.grid_tab2.addWidget(self.estimate_threshold_led, 3, 2, 2, 2)
         self.grid_tab2.addWidget(self.estimate_value_led, 3, 2, 2, 2)
         self.grid_tab2.addWidget(QtWidgets.QLabel("Critical Current\n Estimation:"), 3, 0, 2, 4)
 

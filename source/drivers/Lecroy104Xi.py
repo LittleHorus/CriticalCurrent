@@ -4,13 +4,11 @@ Created on Mon Jul 15 13:37:39 2019
 
 @author: Dmitry
 """
-#import LQCE.instr as instr
 import re
 import visa
 from pyvisa.resources import MessageBasedResource
 
 #Lecroy use VICP protocol for communication
-#default visa class not available with it
 
 
 class Lecroy:
@@ -22,11 +20,11 @@ class Lecroy:
         
         # self.cls()
         # self._visainstrument.read_termination = '\n'
-        self._visainstrument.expect_termination=False
+        self._visainstrument.expect_termination = False
         self._visainstrument.timeout = 10000
         self.bandwidth_limit = "OFF"  # FULL
         self.timebase = 10e-6
-        self.trig_couple = "DC1M" # DC 1MOhm
+        self.trig_couple = "DC1M"  # DC 1MOhm
         self.trig_level = 1  # 1 Volt
     
     def read(self):
@@ -142,9 +140,9 @@ class Lecroy:
         else:
             print("incorrect channel number")
 
-    def set_channel_vert_division(self, channel, vdiv):
+    def set_channel_vert_division(self, channel, vertical_division):
         if 0 < channel < 5:
-            self.write("C{}:VDIV {}".format(channel, vdiv))
+            self.write("C{}:VDIV {}".format(channel, vertical_division))
         else:
             print("incorrect channel value")
 
@@ -171,12 +169,15 @@ class Lecroy:
 
     def set_bandwidth_limit(self, channel, bw):
         if 0 < channel < 5:
+            bw_prep = 'OFF'
             if type(bw) is int or type(bw) is float:
                 if bw <= 20e6:
                     bw_prep = 'ON'
-                if 20e6 < bw <= 200e6:
+                elif 20e6 < bw <= 200e6:
                     bw_prep = '200MHz'
-                if bw > 200e6:
+                elif bw > 200e6:
+                    bw_prep = 'OFF'
+                else:
                     bw_prep = 'OFF'
             if type(bw) is str:
                 bw_prep = bw
