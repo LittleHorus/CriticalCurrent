@@ -93,7 +93,7 @@ class CommonWindow(QtWidgets.QWidget):  # QMainWindow QtWidgets.QWidget
         for i in range(average_count):
             self.current_em.append(Model.current_emul(1e-7, 100, 10e-8))
             self.voltage_em.append(Model.contact_emul(self.current_em[i], 2e-6, 1))
-        tupple_data = Estimation.estimate_cc(self.current_em, self.voltage_em, 0.1e-6, 1, 1.8e-6)
+        tupple_data = Estimation.estimate_cc_f2(self.current_em, self.voltage_em, 0.1e-6, 1, 1.8e-6)
 
         est_current = tupple_data[0]
         table_ipm = tupple_data[1]
@@ -133,7 +133,7 @@ class CommonWindow(QtWidgets.QWidget):  # QMainWindow QtWidgets.QWidget
             print("Exception: {}".format(exc))
 
     def update_estimation(self, current_list, voltage_list):
-        tupple_data = Estimation.estimate_cc(current_list, voltage_list, 25e-9, 1e-7)
+        tupple_data = Estimation.estimate_cc_f2(current_list, voltage_list, 25e-9, 1e-7)
 
         est_current = tupple_data[0]
         table_ipm = tupple_data[1]
@@ -141,6 +141,7 @@ class CommonWindow(QtWidgets.QWidget):  # QMainWindow QtWidgets.QWidget
         table_vpm = tupple_data[3]
         table_vpp = tupple_data[4]
         table_i = tupple_data[5]
+
         for i in range(len(table_i)):
             self.tab_wdg.table_of_params.setItem(i, 0, QtWidgets.QTableWidgetItem("{:.3e}".format(table_ipm[i])))
             self.tab_wdg.table_of_params.item(i, 0).setTextAlignment(QtCore.Qt.AlignCenter | QtCore.Qt.AlignVCenter)
@@ -272,65 +273,113 @@ class Tabs(QtWidgets.QWidget):
         self.tabs.setMaximumWidth(700)
         self.tabs.resize(500, 500)
 
-        self.tabs.addTab(self.tab1, "Measurement")
-        self.tabs.addTab(self.tab2, "File")
+        self.tabs.addTab(self.tab1, "Измерения")
+        self.tabs.addTab(self.tab2, "Из файла")
 
         self.tab1.layout = QtWidgets.QVBoxLayout()
         self.grid_tab1 = QtWidgets.QGridLayout()
 
-        self.btn_csu_connect = QtWidgets.QPushButton("Connect")
+        self.btn_csu_connect = QtWidgets.QPushButton("Подключиться")
+        self.btn_csu_connect.setMaximumSize(120, 30)
+        self.btn_csu_connect.setMinimumSize(120, 30)
         self.lbl_csu_connect = QtWidgets.QLabel("CSU")
 
-        self.btn_vmu_connect = QtWidgets.QPushButton("Connect")
+        self.btn_vmu_connect = QtWidgets.QPushButton("Подключиться")
+        self.btn_vmu_connect.setMaximumSize(120, 30)
+        self.btn_vmu_connect.setMinimumSize(120, 30)
         self.lbl_vmu_connect = QtWidgets.QLabel("VMU")
 
-        self.btn_run_measurement = QtWidgets.QPushButton("Run")
+        self.btn_run_measurement = QtWidgets.QPushButton("Запустить\n измерения")
+        self.btn_run_measurement.setFont(QtGui.QFont('Arial', 14))
         self.btn_run_measurement.setMinimumSize(100, 50)
         self.btn_run_measurement.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
-        self.lbl_run_measurement = QtWidgets.QLabel("Measurement")
-        self.lbl_run_measurement.setFont(QtGui.QFont('Arial', 12))
+
+        self.lbl_run_measurement = QtWidgets.QLabel("Измерения:")
+        self.lbl_run_measurement.setFont(QtGui.QFont('Arial', 14))
         self.lbl_run_measurement.setMinimumSize(120, 30)
         self.lbl_run_measurement.setMaximumSize(120, 30)
         self.lbl_run_measurement.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
 
-        self.lbl_current_range = QtWidgets.QLabel("Current range:")
-        self.lbl_voltage_range = QtWidgets.QLabel("Voltage range:")
+        self.lbl_current_range = QtWidgets.QLabel("Рабочий диапазон:")
+        # self.lbl_voltage_range = QtWidgets.QLabel("Voltage range:")
         self.cmb_current_range = QtWidgets.QComboBox(self)
         self.cmb_current_range.addItems(att_csu_ranges)
-        self.cmb_voltage_range = QtWidgets.QComboBox(self)
-        self.cmb_voltage_range.addItems(att_vmu_ranges)
+        # self.cmb_voltage_range = QtWidgets.QComboBox(self)
+        # self.cmb_voltage_range.addItems(att_vmu_ranges)
 
-        self.lbl_start_current = QtWidgets.QLabel("Start current:")
+        self.lbl_start_current = QtWidgets.QLabel("Начальный ток:")
         self.led_start_current = QtWidgets.QLineEdit("0")
-        self.led_start_current.setValidator(QRegExpValidator(QtCore.QRegExp("[0-9]{4}|[a-fA-F0-9]{4}")))
+        self.led_start_current.setAlignment(QtCore.Qt.AlignCenter)
+        # self.led_start_current.setValidator(QRegExpValidator(QtCore.QRegExp("[0-9]{4}|[a-fA-F0-9]{4}")))
         self.led_start_current.setMaximumSize(120, 30)
         self.led_start_current.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
 
-        self.lbl_step_current = QtWidgets.QLabel("Step current:")
-        self.led_step_current = QtWidgets.QLineEdit("0")
-        self.led_step_current.setValidator(QRegExpValidator(QtCore.QRegExp("[0-9]{4}|[a-fA-F0-9]{4}")))
+        self.lbl_step_current = QtWidgets.QLabel("Шаг по току:")
+        self.led_step_current = QtWidgets.QLineEdit("1e-9")
+        self.led_step_current.setAlignment(QtCore.Qt.AlignCenter)
+        # led_step_current.setValidator(QRegExpValidator(QtCore.QRegExp("[0-9]{4}|[a-fA-F0-9]{4}")))
         self.led_step_current.setMaximumSize(120, 30)
         self.led_step_current.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
 
-        self.lbl_points_current = QtWidgets.QLabel("Current points:")
+        self.lbl_points_current = QtWidgets.QLabel("Количество точек:")
         self.led_points_current = QtWidgets.QLineEdit("1")
-        self.led_points_current.setValidator(QRegExpValidator(QtCore.QRegExp("[0-9]{4}|[a-fA-F0-9]{4}")))
+        self.led_points_current.setAlignment(QtCore.Qt.AlignCenter)
+        self.led_points_current.setValidator(QRegExpValidator(QtCore.QRegExp("[0-9]{5}")))
         self.led_points_current.setMaximumSize(120, 30)
         self.led_points_current.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
 
-        self.lbl_main_description = QtWidgets.QLabel("JJCC Measurements")
-        self.lbl_main_description.setFont(QtGui.QFont('Arial', 12))
+        self.lbl_vmu_ch_current = QtWidgets.QLabel("Канал тока:")
+        self.box_vmu_ch_current = QtWidgets.QComboBox(self)
+        self.box_vmu_ch_current.addItems(['CH1', 'CH2', 'CH3', 'CH4'])
+        self.box_vmu_ch_current.setFont(QtGui.QFont('Arial', 12))
+        self.box_vmu_cpl_current = QtWidgets.QComboBox(self)
+        self.box_vmu_cpl_current.addItems(['DC50', 'DC1M', 'AC'])
+        self.box_vmu_cpl_current.setFont(QtGui.QFont('Arial', 12))
+        self.box_vmu_flt_current = QtWidgets.QComboBox(self)
+        self.box_vmu_flt_current.addItems(['OFF', '20MHz', '200MHz'])
+        self.box_vmu_flt_current.setFont(QtGui.QFont('Arial', 12))
+
+        self.lbl_vmu_ch_voltage = QtWidgets.QLabel("Канал напряжения:")
+        self.box_vmu_ch_voltage = QtWidgets.QComboBox(self)
+        self.box_vmu_ch_voltage.addItems(['CH1', 'CH2', 'CH3', 'CH4'])
+        self.box_vmu_ch_voltage.setFont(QtGui.QFont('Arial', 12))
+        self.box_vmu_cpl_voltage = QtWidgets.QComboBox(self)
+        self.box_vmu_cpl_voltage.addItems(['DC50', 'DC1M', 'AC'])
+        self.box_vmu_cpl_voltage.setFont(QtGui.QFont('Arial', 12))
+        self.box_vmu_flt_voltage = QtWidgets.QComboBox(self)
+        self.box_vmu_flt_voltage.addItems(['OFF', '20MHz', '200MHz'])
+        self.box_vmu_flt_voltage.setFont(QtGui.QFont('Arial', 12))
+
+        self.lbl_sampling_time = QtWidgets.QLabel("Шаг по времени, сек:")
+        self.lbl_sampling_time.setFont(QtGui.QFont('Arial', 12))
+        self.led_sampling_time = QtWidgets.QLineEdit("0.001")
+        self.led_sampling_time.setAlignment(QtCore.Qt.AlignCenter)
+        # self.led_sampling_time.setValidator(QRegExpValidator(QtCore.QRegExp("[0-9]{5}")))
+        self.led_sampling_time.setMaximumSize(120, 30)
+        self.led_sampling_time.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
+
+        self.lbl_measurement_mode = QtWidgets.QLabel("Режим измерения:")
+        self.box_measurement_mode = QtWidgets.QComboBox(self)
+        self.box_measurement_mode.addItems(['Стандартный', 'Оценивание'])
+        self.box_measurement_mode.setFont(QtGui.QFont('Arial', 12))
+
+        self.lbl_main_description = QtWidgets.QLabel("Измерение критического тока контакта")
+        self.lbl_main_description.setFont(QtGui.QFont('Arial', 14))
+        self.lbl_csu_params_label = QtWidgets.QLabel("Параметры источника тока:")
+        self.lbl_csu_params_label.setFont(QtGui.QFont('Arial', 14))
+        self.lbl_vmu_params_label = QtWidgets.QLabel("Параметры измерителя:")
+        self.lbl_vmu_params_label.setFont(QtGui.QFont('Arial', 14))
 
         self.grid_tab1.addWidget(self.lbl_main_description, 0, 0, 1, 5)
         self.grid_tab1.addWidget(self.lbl_csu_connect, 1, 0, 1, 1)
-        self.grid_tab1.addWidget(self.btn_csu_connect, 1, 1, 1, 1)
-        self.grid_tab1.addWidget(self.lbl_vmu_connect, 1, 2, 1, 1, Qt.AlignCenter)
-        self.grid_tab1.addWidget(self.btn_vmu_connect, 1, 3, 1, 1)
-        self.grid_tab1.addWidget(self.lbl_current_range, 2, 0, 1, 2, Qt.AlignLeft)
-        self.grid_tab1.addWidget(self.cmb_current_range, 3, 0, 1, 2, Qt.AlignLeft)
-        self.grid_tab1.addWidget(self.lbl_voltage_range, 2, 2, 1, 2, Qt.AlignLeft)
-        self.grid_tab1.addWidget(self.cmb_voltage_range, 3, 2, 1, 2, Qt.AlignLeft)
-        self.grid_tab1.addWidget(QtWidgets.QLabel("Current source unit parameters:"), 4, 0, 1, 5)
+        self.grid_tab1.addWidget(self.btn_csu_connect, 1, 1, 1, 2)
+        self.grid_tab1.addWidget(self.lbl_vmu_connect, 1, 3, 1, 1, Qt.AlignCenter)
+        self.grid_tab1.addWidget(self.btn_vmu_connect, 1, 4, 1, 2)
+
+        self.grid_tab1.addWidget(self.lbl_csu_params_label, 2, 0, 1, 5)
+        self.grid_tab1.addWidget(self.lbl_current_range, 3, 0, 1, 2, Qt.AlignLeft)
+        self.grid_tab1.addWidget(self.cmb_current_range, 4, 0, 1, 2, Qt.AlignLeft)
+
         self.grid_tab1.addWidget(self.lbl_start_current, 5, 0, 1, 3)
         self.grid_tab1.addWidget(self.led_start_current, 6, 0, 1, 3)
         self.grid_tab1.addWidget(self.lbl_step_current,  5, 2, 1, 3)
@@ -338,10 +387,27 @@ class Tabs(QtWidgets.QWidget):
         self.grid_tab1.addWidget(self.lbl_points_current, 5, 4, 1, 3)
         self.grid_tab1.addWidget(self.led_points_current, 6, 4, 1, 3)
 
-        self.grid_tab1.addWidget(QtWidgets.QLabel(""), 7, 0, 3, 6)
-        self.grid_tab1.addWidget(self.lbl_run_measurement, 10, 0, 2, 6)
-        self.grid_tab1.addWidget(self.btn_run_measurement, 12, 0, 4, 2)
-        # self.grid_tab1.addWidget(QtWidgets.QLabel("test"), 12, 2, 1, 1)
+        self.grid_tab1.addWidget(self.lbl_vmu_params_label, 7, 0, 1, 3)
+        self.grid_tab1.addWidget(self.lbl_vmu_ch_current, 8, 0, 1, 2)
+        self.grid_tab1.addWidget(self.box_vmu_ch_current, 9, 0, 1, 1)
+        self.grid_tab1.addWidget(self.lbl_vmu_ch_voltage, 10, 0, 1, 2)
+        self.grid_tab1.addWidget(self.box_vmu_ch_voltage, 11, 0, 1, 1)
+
+        self.grid_tab1.addWidget(self.box_vmu_cpl_current, 9, 1, 1, 1)
+        self.grid_tab1.addWidget(self.box_vmu_flt_current, 9, 2, 1, 1)
+        self.grid_tab1.addWidget(self.box_vmu_cpl_voltage, 11, 1, 1, 1)
+        self.grid_tab1.addWidget(self.box_vmu_flt_voltage, 11, 2, 1, 1)
+
+        self.grid_tab1.addWidget(QtWidgets.QLabel(""), 12, 0, 3, 6)
+        self.grid_tab1.addWidget(self.lbl_run_measurement, 13, 0, 1, 6)
+
+        self.grid_tab1.addWidget(self.lbl_sampling_time, 14, 0, 1, 2)
+        self.grid_tab1.addWidget(self.led_sampling_time, 15, 0, 1, 2)
+        self.grid_tab1.addWidget(self.lbl_measurement_mode, 14, 3, 1, 2)
+        self.grid_tab1.addWidget(self.box_measurement_mode, 15, 3, 1, 2)
+
+        self.grid_tab1.addWidget(QtWidgets.QLabel(""), 16, 0, 3, 6)
+        self.grid_tab1.addWidget(self.btn_run_measurement, 12+6, 0, 4, 2)
 
         self.tab1.layout.insertLayout(0, self.grid_tab1)
         self.tab1.layout.addWidget(QtWidgets.QLabel(""), 1)
@@ -350,12 +416,12 @@ class Tabs(QtWidgets.QWidget):
         self.tab2.layout = QtWidgets.QVBoxLayout()
         self.grid_tab2 = QtWidgets.QGridLayout()
 
-        self.btn_load_file = QtWidgets.QPushButton("Load \n from file")
-        self.btn_load_file.setMaximumSize(120, 60)
-        self.btn_load_file.setMinimumSize(120, 60)
+        self.btn_load_file = QtWidgets.QPushButton("Загрузить данные\n из файла")
+        self.btn_load_file.setMaximumSize(140, 60)
+        self.btn_load_file.setMinimumSize(140, 60)
         self.btn_load_file.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
 
-        self.btn_set_params = QtWidgets.QPushButton("Set \n parameters")
+        self.btn_set_params = QtWidgets.QPushButton("Установить\nпараметры")
         self.btn_set_params.setMaximumSize(120, 60)
         self.btn_set_params.setMinimumSize(120, 60)
         self.btn_set_params.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
@@ -394,7 +460,7 @@ class Tabs(QtWidgets.QWidget):
         self.grid_tab2.addWidget(self.btn_set_params, 0, 3, 2, 3)
         self.grid_tab2.addWidget(self.estimate_threshold_led, 3, 2, 2, 2)
         self.grid_tab2.addWidget(self.estimate_value_led, 3, 2, 2, 2)
-        self.grid_tab2.addWidget(QtWidgets.QLabel("Critical Current\n Estimation:"), 3, 0, 2, 4)
+        self.grid_tab2.addWidget(QtWidgets.QLabel("Оценка\nкритического тока:"), 3, 0, 2, 4)
 
         self.tab2.layout.insertLayout(0, self.grid_tab2)
         self.tab2.layout.addWidget(self.table_of_params, 1)
@@ -409,7 +475,7 @@ if __name__ == '__main__':
 
     app = QtWidgets.QApplication(sys.argv)
     ex = CommonWindow()
-    ex.setFont(QtGui.QFont('Arial', 10))  # QtGui.QFont.Bold
+    ex.setFont(QtGui.QFont('Arial', 12))  # QtGui.QFont.Bold
     ex.setWindowTitle("LQCE_Est v{}".format(__version__))
     ex.adjustSize()
     ex.show()

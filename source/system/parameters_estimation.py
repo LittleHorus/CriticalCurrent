@@ -95,6 +95,30 @@ class Estimation:
         return result, current_previous, current_exceeded, voltage_previous, voltage_exceeded, index_list
 
     @staticmethod
+    def estimate_cc_f2(
+            current: list, voltage: list, current_step: float = 0.1e-6, time_step = 1e-6, threshold: float = 1.8e-6):
+        c_before = list()
+        c_after = list()
+        v_before = list()
+        v_after = list()
+        threshold_exceeded_index = list()
+        current_sum = list()
+        current_total = 0.0
+        for i in range(len(current)):
+            current_list = current[i]
+            voltage_list = voltage[i]
+            cur_pre, cur_up, index, vol_pre, vol_up = Estimation.find_smth(current_list, voltage_list, threshold)
+            c_before.append(cur_pre)
+            c_after.append(cur_up)
+            v_before.append(vol_pre)
+            v_after.append(vol_up)
+            threshold_exceeded_index.append(index)
+            current_sum.append(cur_pre+cur_up)
+            current_total += cur_pre+cur_up
+        result = current_total / (2*len(current))
+        return result, c_before, c_after, v_before, v_after, threshold_exceeded_index
+
+    @staticmethod
     def find_threshold_exceed(data: list, threshold: float) -> int:
         result = 0  # index
         for i in range(len(data)):
