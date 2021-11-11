@@ -1,26 +1,18 @@
-import socket
-import crcmod
-from ctypes import (Union, Array, c_uint8, c_float, cdll, CDLL)
-from enum import Enum
-from ctypes import *
-import ncs5
-import k6221
+import drivers.ncs5 as ncs5
 
 
 class CurrentSourceUnit:
-    def __init__(self, device: str = 'NCS5'):
+    def __init__(self, device: str = 'NCS5', addr: str = '192.168.0.77'):
         self._ch_count = 1
-        self._range_enum = {'50mA': [-50e-3, 50e3, 1e-6], '10mA': [-10e-3, 10e-3, 100e-9], '1mA': [-1e-3, 1e-3, 10e-9],
-                            '100uA': [-100e-6, 100e-6, 1e-9], '10uA': [-10e-6, 10e-6, 100e-12],
-                            '1uA': [-1e-6, 1e-6, 10e-12]}
+        self._range_enum = {'50мА': [-50e-3, 50e3, 1e-6], '10мА': [-10e-3, 10e-3, 100e-9], '1мА': [-1e-3, 1e-3, 10e-9],
+                            '100мкА': [-100e-6, 100e-6, 1e-9], '10мкА': [-10e-6, 10e-6, 100e-12],
+                            '1мкА': [-1e-6, 1e-6, 10e-12]}
         self._connection_state = 'False'
         self._current = 0
         self._device = device
 
         if self._device == 'NCS5' or self._device == 'ncs5' or self._device == 'ncs':
             self.current_src = ncs5.Device()
-        elif self._device == 'K6221' or 'k6221':
-            self.current_src = k6221.Device()
         else:
             raise Exception('DeviceSupportError')
         self._device_ranges = self.current_src.current_ranges

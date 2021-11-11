@@ -1,32 +1,30 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Mon Jul 15 13:37:39 2019
-
-@author: Dmitry
-"""
 import re
-import visa
+import pyvisa as visa
 from pyvisa.resources import MessageBasedResource
-
-#Lecroy use VICP protocol for communication
 
 
 class Lecroy:
     
-    def __init__(self, visa_name):
-        self.visa_name = visa_name
+    def __init__(self, visa_name_input='192.168.0.70'):
+        self.visa_name = 'VICP::{}::INSTR'.format(visa_name_input)
         self.rm = visa.ResourceManager()
-        self._visainstrument = self.rm.open_resource(self.visa_name, resource_pyclass=MessageBasedResource)
+        # self._visainstrument = self.rm.open_resource(self.visa_name, resource_pyclass=MessageBasedResource)
         
         # self.cls()
         # self._visainstrument.read_termination = '\n'
-        self._visainstrument.expect_termination = False
-        self._visainstrument.timeout = 10000
+        # self._visainstrument.expect_termination = False
+        # self._visainstrument.timeout = 10000
         self.bandwidth_limit = "OFF"  # FULL
         self.timebase = 10e-6
-        self.trig_couple = "DC1M"  # DC 1MOhm
         self.trig_level = 1  # 1 Volt
-    
+        self.trigger_coupling = 'D1M'
+        self.trigger_delay = 0
+
+    def open_session(self):
+        self._visainstrument = self.rm.open_resource(self.visa_name, resource_pyclass=MessageBasedResource)
+        self._visainstrument.expect_termination = False
+        self._visainstrument.timeout = 10000
+
     def read(self):
         return self._visainstrument.read()
 
@@ -139,6 +137,10 @@ class Lecroy:
             return self.query("C{}:CPL?".format(channel))
         else:
             print("incorrect channel number")
+            return 0
+
+    def set_channel_range(self, channel, ch_range):
+        self.set_channel_vert_division(channel, ch_range)
 
     def set_channel_vert_division(self, channel, vertical_division):
         if 0 < channel < 5:
@@ -154,6 +156,7 @@ class Lecroy:
             return float(v[0])
         else:
             print("incorrect channel number")
+            return 0
 
     def set_vert_offset(self, channel, offset):
         if 0 < channel < 5:
@@ -186,13 +189,13 @@ class Lecroy:
             print("incorrect channel number")
 
     def get_bandwidth_limit(self, channel): 
-        qstring = self.query("BWL?")
-        pstring = re.split(r'\W+', qstring)
-        qlist = []
+        query_string = self.query("BWL?")
+        parse_string = re.split(r'\W+', query_string)
+        query_list = []
         for i in range(4):
-            qlist.append(pstring[2*i+2])
+            query_list.append(parse_string[2*i+2])
         if 0 < channel < 5:
-            return qlist[channel-1]
+            return query_list[channel-1]
         else:
             print("incorrect channel number")
     
@@ -204,11 +207,14 @@ class Lecroy:
 
     def get_channel_state(self, channel):
         if 0 < channel < 5:
-            cstring = self.query("C{}:TRA?".format(channel))
-            csub = cstring.split('C{}:TRA '.format(channel))
-            return csub[1].split('\n')
+            ch_state_string = self.query("C{}:TRA?".format(channel))
+            ch_sub = ch_state_string.split('C{}:TRA '.format(channel))
+            return ch_sub[1].split('\n')
         else:
             print("incorrect channel number")
+
+    def get_data_from_channel(self, channel):
+        self.get_waveform(channel, bytes_count=10000)
 
     def get_waveform(self, channel, bytes_count):
         self.write("C{}:WF? DAT1".format(channel))

@@ -1,8 +1,7 @@
 import matplotlib
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg, NavigationToolbar2QT as NavigationToolbar
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
-import sys
-from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QSizePolicy
+from PyQt5.QtWidgets import QSizePolicy
 matplotlib.use('Qt5Agg')
 
 
@@ -22,13 +21,7 @@ class MplCanvas(FigureCanvasQTAgg):
 
     def plot(self, data_x: list, data_y: list):
         self.axes.cla()
-        if data_x is None and data_y:
-            self.axes.plot(data_y, 'go--')
-        elif data_x and data_y:
-            self.axes.plot(data_x, data_y, 'go--')
-        else:
-            pass
-
+        self.axes.plot(data_x, data_y, 'go--')
         self.axes.set_title(self._plot_title)
         self.axes.set_ylabel(self._plot_y_label)
         self.axes.set_xlabel(self._plot_x_label)

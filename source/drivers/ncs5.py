@@ -22,11 +22,14 @@ class Device:
 		self._default_channel = 1
 		self._default_port = 7
 		self._dist_address = ('192.168.0.77', 7)
-		self._current_ranges = ['1uA', '10uA', '100uA', '1mA', '10mA', '50mA']
+		self._current_ranges = ['1мкА', '10мкА', '100мкА', '1мА', '10мА', '50мА']
 
 	def connect(self):
 		self.sock.connect(self._dist_address)
 		self._connection_status = True
+
+	def disconnect(self):
+		self.close()
 
 	def close(self):
 		if self._connection_status is True:
@@ -79,17 +82,17 @@ class Device:
 		# 1uA 10uA 100uA 1mA 10mA 50mA
 		temp_data = [self._device_address, 0x60, 0x60, 0x60, 0x60, 0x60, 0x60, 0x7f, 0x7f, 0x7f]
 		temp_data[1] = 0x60 | channel
-		if channel_range == '1uA' or channel_range == 1e-6:
+		if channel_range == '1мкА' or channel_range == 1e-6:
 			temp_data[channel + 1] = 0x60
-		elif channel_range == '10uA' or channel_range == 1e-5:
+		elif channel_range == '10мкА' or channel_range == 1e-5:
 			temp_data[channel + 1] = 0x61
-		elif channel_range == '100uA' or channel_range == 1e-4:
+		elif channel_range == '100мкА' or channel_range == 1e-4:
 			temp_data[channel + 1] = 0x62
-		elif channel_range == '1mA' or channel_range == 1e-3:
+		elif channel_range == '1мА' or channel_range == 1e-3:
 			temp_data[channel + 1] = 0x63
-		elif channel_range == '10mA' or channel_range == 1e-2:
+		elif channel_range == '10мА' or channel_range == 1e-2:
 			temp_data[channel + 1] = 0x64
-		elif channel_range == '50mA' or channel_range == 5e-2:
+		elif channel_range == '50мА' or channel_range == 5e-2:
 			temp_data[channel + 1] = 0x65
 		else:
 			temp_data[channel + 1] = 0x60  # 1uA range

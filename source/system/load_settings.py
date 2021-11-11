@@ -1,5 +1,3 @@
-import numpy as np
-import sys
 from configparser import ConfigParser
 import pathlib
 

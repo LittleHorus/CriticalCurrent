@@ -1,6 +1,4 @@
 from enum import Enum
-import numpy as np
-from system.modeling import Model
 
 
 class EstimateParameters(Enum):
@@ -96,7 +94,8 @@ class Estimation:
 
     @staticmethod
     def estimate_cc_f2(
-            current: list, voltage: list, current_step: float = 0.1e-6, time_step = 1e-6, threshold: float = 1.8e-6):
+            current: list, voltage: list,
+            current_step: float = 0.1e-6, time_step: float = 1e-6, threshold: float = 1.8e-6):
         c_before = list()
         c_after = list()
         v_before = list()
